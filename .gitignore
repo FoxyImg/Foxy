@@ -6,3 +6,4 @@ docker/db/*
 cache
 .vscode
 .idea
+__debug_bin*

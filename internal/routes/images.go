@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"foxy/internal/aws"
 	"foxy/internal/config"
+	"foxy/internal/metadata"
 	"foxy/internal/process/images"
 	"foxy/internal/utils"
 	"log"
@@ -73,13 +74,13 @@ func HandleImagesRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params, err := images.BuildParams(parts[3:])
+	params, err := metadata.BuildParams(parts[3:])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if !params.DisableRenderCache {
+	if !params.Debug.DisableRenderCache {
 		cached, _ := utils.GetCachedResult(accessKey, string(source), parts[3:], params.ExportParams.Format)
 		if cached != nil {
 			sendImageResult(w, params.ExportParams.Format, cached)
@@ -99,7 +100,7 @@ func HandleImagesRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img, err := utils.GetCachedSource(accessKey, string(source), url, params.DisableSourceCache)
+	img, err := utils.GetCachedSource(accessKey, string(source), url, params.Debug.DisableSourceCache)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)

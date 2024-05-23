@@ -1,9 +1,11 @@
-package images
+package metadata
 
 import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/davidbyttow/govips/v2/vips"
 )
 
 type ImageExportParams struct {
@@ -14,21 +16,41 @@ type ImageExportParams struct {
 	NearLossless    *bool  `json:"nearLossless"`
 }
 
-type ImageParams struct {
-	DebugFaces       bool `json:"debugFaces"`
-	DebugAllFaces    bool `json:"debugAllFaces"`
-	DebugPeople      bool `json:"debugPeople"`
-	DebugAllPeople   bool `json:"debugAllPeople"`
-	DebugOtherLabels bool `json:"debugOtherLabels"`
-	MetaOnly         bool `json:"metaOnly"`
-	NeedsVision      bool `json:"needsVision"`
+type ColorRGBA struct {
+	R uint8 `json:"r"`
+	G uint8 `json:"g"`
+	B uint8 `json:"b"`
+	A uint8 `json:"a"`
+}
 
-	Crop        *[]string `json:"crop"`
-	FaceIndex   *int      `json:"faceIndex"`
-	PersonIndex *int      `json:"personIndex"`
-	Width       *int      `json:"width"`
-	Height      *int      `json:"height"`
-	Gravity     *string   `json:"gravity"`
+type DebugOptions struct {
+	Faces       bool `json:"faces"`
+	AllFaces    bool `json:"allFaces"`
+	People      bool `json:"people"`
+	AllPeople   bool `json:"allPeople"`
+	OtherLabels bool `json:"otherLabels"`
+
+	DisableSourceCache bool `json:"disableSourceCache"`
+	DisableRenderCache bool `json:"disableRenderCache"`
+	DisableMetaCache   bool `json:"disableMetaCache"`
+}
+
+type ImageParams struct {
+	Debug DebugOptions `json:"debug"`
+
+	MetaOnly    bool `json:"metaOnly"`
+	NeedsVision bool `json:"needsVision"`
+
+	Crop        *[]string         `json:"crop"`
+	FaceIndex   *int              `json:"faceIndex"`
+	PersonIndex *int              `json:"personIndex"`
+	Width       *int              `json:"width"`
+	Height      *int              `json:"height"`
+	AspectRatio *float64          `json:"aspectRatio"`
+	Gravity     *string           `json:"gravity"`
+	Interesting *vips.Interesting `json:"interesting"`
+
+	BackgroundColor ColorRGBA `json:"bgColor"`
 
 	Rotate *int  `json:"rotate"`
 	FlipH  *bool `json:"flipH"`
@@ -41,16 +63,12 @@ type ImageParams struct {
 	ExportParams ImageExportParams `json:"export"`
 
 	Blur *int `json:"blur"`
-
-	DisableSourceCache bool `json:"disableSourceCache"`
-	DisableRenderCache bool `json:"disableRenderCache"`
-	DisableMetaCache   bool `json:"disableMetaCache"`
 }
 
 func BuildParams(pathParts []string) (*ImageParams, error) {
 	result := ImageParams{
 		ExportParams: ImageExportParams{
-			Format:  "jpg",
+			Format:  "webp",
 			Quality: 85,
 		},
 	}
@@ -68,27 +86,27 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			types := strings.Split(split[1], ",")
 			if slices.Contains(types, "faces") {
 				result.NeedsVision = true
-				result.DebugFaces = true
+				result.Debug.Faces = true
 			}
 
 			if slices.Contains(types, "all-faces") {
 				result.NeedsVision = true
-				result.DebugAllFaces = true
+				result.Debug.AllFaces = true
 			}
 
 			if slices.Contains(types, "people") {
 				result.NeedsVision = true
-				result.DebugPeople = true
+				result.Debug.People = true
 			}
 
 			if slices.Contains(types, "all-people") {
 				result.NeedsVision = true
-				result.DebugAllPeople = true
+				result.Debug.AllPeople = true
 			}
 
 			if slices.Contains(types, "other-labels") {
 				result.NeedsVision = true
-				result.DebugOtherLabels = true
+				result.Debug.OtherLabels = true
 			}
 		case "nocache":
 			if len(split) != 2 {
@@ -96,9 +114,9 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			}
 
 			types := strings.Split(split[1], ",")
-			result.DisableSourceCache = slices.Contains(types, "source")
-			result.DisableRenderCache = slices.Contains(types, "render")
-			result.DisableMetaCache = slices.Contains(types, "meta")
+			result.Debug.DisableSourceCache = slices.Contains(types, "source")
+			result.Debug.DisableRenderCache = slices.Contains(types, "render")
+			result.Debug.DisableMetaCache = slices.Contains(types, "meta")
 		// Cropping/Resizing
 		case "crop":
 			if len(split) != 2 {
@@ -129,6 +147,23 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			}
 
 			result.Height = &h
+		case "ar":
+			if len(split) != 3 {
+				continue
+			}
+
+			arw, err := strconv.Atoi(split[1])
+			if err != nil {
+				continue
+			}
+
+			arh, err := strconv.Atoi(split[2])
+			if err != nil {
+				continue
+			}
+
+			ar := float64(arw) / float64(arh)
+			result.AspectRatio = &ar
 		case "face":
 			if len(split) != 2 {
 				continue
@@ -151,6 +186,41 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			}
 
 			result.PersonIndex = &p
+		case "smart":
+			if len(split) != 2 {
+				continue
+			}
+
+			var interesting vips.Interesting
+			switch split[1] {
+			case "entropy":
+				interesting = vips.InterestingEntropy
+			case "high":
+				interesting = vips.InterestingHigh
+			case "low":
+				interesting = vips.InterestingLow
+			case "center":
+				interesting = vips.InterestingCentre
+			case "centre":
+				interesting = vips.InterestingCentre
+			case "none":
+				interesting = vips.InterestingNone
+			default:
+				interesting = vips.InterestingAttention
+			}
+
+			result.Interesting = &interesting
+		case "bg":
+			if len(split) != 2 {
+				continue
+			}
+
+			c, err := ParseHexColor(split[1])
+			if err != nil {
+				continue
+			}
+
+			result.BackgroundColor = c
 		// File Format Related
 		case "fmt":
 			if len(split) != 2 {
