@@ -45,7 +45,7 @@ Below is a list of the env variables you can set:
 - `DEFAULT_USER_SOURCE_CONFIG_FILE` - The path to the config json file for the default source
 
 ## Preview App
-The [Foxy Preview](https://github.com) repository contains a Vue.js app that can be used to preview images and mess around with the API.
+The [Foxy Preview](https://github.com/jawngee/foxy-preview) repository contains a Vue.js app that can be used to preview images and mess around with the API.
 
 ## Building URLs
 The structure of the URL is as follows:
