@@ -1,0 +1,96 @@
+version: '3.4'
+
+volumes:
+  postgres-data:
+
+networks:
+  compreface:
+    driver: bridge
+
+services:
+  compreface-postgres-db:
+    image: exadel/compreface-postgres-db:latest
+    networks:
+      - compreface
+    restart: always
+    container_name: "compreface-postgres-db"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  compreface-admin:
+    restart: always
+    image: exadel/compreface-admin:latest
+    networks:
+      - compreface
+    container_name: "compreface-admin"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_URL=jdbc:postgresql://compreface-postgres-db:5432/postgres
+      - SPRING_PROFILES_ACTIVE=dev
+      - ENABLE_EMAIL_SERVER=false
+      - ADMIN_JAVA_OPTS=-Xmx1g
+      - MAX_FILE_SIZE=100MB
+      - MAX_REQUEST_SIZE=100MB
+    depends_on:
+      - compreface-postgres-db
+      - compreface-api
+
+  compreface-api:
+    restart: always
+    image: exadel/compreface-api:latest
+    networks:
+      - compreface
+    container_name: "compreface-api"
+    depends_on:
+      - compreface-postgres-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_URL=jdbc:postgresql://compreface-postgres-db:5432/postgres
+      - SPRING_PROFILES_ACTIVE=dev
+      - API_JAVA_OPTS=-Xmx4g
+      - SAVE_IMAGES_TO_DB=true
+      - MAX_FILE_SIZE=100MB
+      - MAX_REQUEST_SIZE=100MB
+      - CONNECTION_TIMEOUT=10000
+      - READ_TIMEOUT=60000
+
+  compreface-fe:
+    restart: always
+    image: exadel/compreface-fe:latest
+    networks:
+      - compreface
+    container_name: "compreface-ui"
+    ports:
+      - "8000:80"
+    depends_on:
+      - compreface-api
+      - compreface-admin
+    environment:
+      - CLIENT_MAX_BODY_SIZE=100m
+      - PROXY_READ_TIMEOUT=60000ms
+      - PROXY_CONNECT_TIMEOUT=10000ms
+
+  compreface-core:
+    restart: always
+    image: exadel/compreface-core:latest
+    container_name: "compreface-core"
+    networks:
+      - compreface
+    environment:
+      - ML_PORT=3000
+#      - IMG_LENGTH_LIMIT=100MB
+      - UWSGI_PROCESSES=2
+      - UWSGI_THREADS=1
+    healthcheck:
+      test: curl --fail http://localhost:3000/healthcheck || exit 1
+      interval: 10s
+      retries: 0
+      start_period: 0s
+      timeout: 1s
