@@ -1,9 +1,8 @@
 .env
 node_modules
-foxydocker/compreface/custom-builds
-foxydocker/db/*
-!foxydocker/db/.gitkeep
-foxy/cache
-foxy/renders
+docker/compreface/custom-builds
+docker/db/*
+!docker/db/.gitkeep
+cache
 .vscode
 .idea
