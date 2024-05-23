@@ -10,6 +10,7 @@ import (
 	"foxy/internal/utils"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -43,19 +44,27 @@ func HandleImagesRoute(w http.ResponseWriter, r *http.Request) {
 
 	accessKey := parts[1]
 
-	sourceConfig, err := config.GetConfigCache(accessKey)
+	sourceConfig, err := config.GetSourceConfigFromCache(accessKey)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if sourceConfig.Secret != nil {
+	if os.Getenv("REQUIRE_SIG_VALIDATION") == "true" {
+		if sourceConfig.Secret == nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !r.URL.Query().Has("s") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
 		if !utils.VerifySignature(*sourceConfig.Secret, r.URL.Query().Get("s"), r.URL.Path) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-	} else {
-		log.Println("No secret set")
 	}
 
 	source, err := base64.URLEncoding.DecodeString(parts[2])
