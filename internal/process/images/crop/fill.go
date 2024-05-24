@@ -37,6 +37,18 @@ func cropFill(cW *int, cH *int, params *metadata.ImageParams, sourceImage *vips.
 	cropX := utils.Min(sw, utils.Max(0, (sw/2)-(cropSize.Width/2)))
 	cropY := utils.Min(sh, utils.Max(0, (sh/2)-(cropSize.Height/2)))
 
+	if params.HGravity == "left" {
+		cropX = 0
+	} else if params.HGravity == "right" {
+		cropX = sw - cropSize.Width
+	}
+
+	if params.VGravity == "top" {
+		cropY = 0
+	} else if params.VGravity == "bottom" {
+		cropY = sh - cropSize.Height
+	}
+
 	err := sourceImage.Crop(
 		cropX,
 		cropY,

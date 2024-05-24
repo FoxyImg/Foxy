@@ -48,7 +48,8 @@ type ImageParams struct {
 	Height      *int              `json:"height"`
 	AspectRatio *float64          `json:"aspectRatio"`
 	Zoom        *float64          `json:"zoom"`
-	Gravity     *string           `json:"gravity"`
+	HGravity    string            `json:"hGravity"`
+	VGravity    string            `json:"vGravity"`
 	Interesting *vips.Interesting `json:"interesting"`
 
 	BackgroundColor ColorRGBA `json:"bgColor"`
@@ -68,6 +69,8 @@ type ImageParams struct {
 
 func BuildParams(pathParts []string) (*ImageParams, error) {
 	result := ImageParams{
+		HGravity: "center",
+		VGravity: "center",
 		ExportParams: ImageExportParams{
 			Format:  "webp",
 			Quality: 85,
@@ -222,6 +225,14 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			}
 
 			result.Interesting = &interesting
+		case "gravity":
+			if len(split) == 2 {
+				result.HGravity = split[1]
+				result.VGravity = split[1]
+			} else if len(split) == 3 {
+				result.HGravity = split[1]
+				result.VGravity = split[2]
+			}
 		case "bg":
 			if len(split) != 2 {
 				continue
