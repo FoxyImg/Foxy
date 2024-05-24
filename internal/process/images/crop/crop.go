@@ -53,7 +53,7 @@ func Crop(imageMeta *metadata.Metadata, params *metadata.ImageParams, sourceImag
 					}
 
 					return croppedImage, nil
-				} else if cropMode == "fill" && cW != nil && cH != nil {
+				} else if cropMode == "crop" && cW != nil && cH != nil {
 					croppedImage, err := cropFill(cW, cH, params, sourceImage)
 					if err != nil {
 						return nil, err

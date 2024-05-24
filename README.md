@@ -62,5 +62,56 @@ So an example URL would be:
 
 The `signature` is a base64 encoded HMAC SHA256 of the URL using your `DEFAULT_USER_SECRET` as the key.
 
-### Parameters
-TBD
+## Parameters
+### Crop/Resizing
+
+#### Crop Modes
+```html
+/crop:face,person,fit,smart,crop
+```
+The list crop modes to try in the order they should be tried.
+
+- `face` - Crop to a face or the bounding box of all the detected faces
+- `person` - Crop to a person or the bounding box of all the detected people
+- `fit` - Resize the image proportionally to fit the specified width and height.  Any extra space will be filled with the `bg` background color (see below).
+- `smart` - Crops the image using lipvip's smart algorithms.  These are really hit and miss.
+- `crop` - Straight up crop the image.
+
+If crop mode is omitted, the image is resized proportionally to the specified width and/or height.
+
+
+
+#### Width/Height
+```html
+/w:<width>
+```
+The width of the target image in pixels.
+
+```html
+/h:<height>
+```
+The height of the image.
+
+The crop modes `face`, `person`, `fill`, `smart` and `fit` require both width and height to be set OR either width or height to be set and an aspect ratio (see below).
+
+#### Aspect Ratio
+```html
+/ar:<width>:<height>
+```
+The aspect ratio of the image, eg 16:9.
+
+You must specify width OR height for aspect ratio to work. If you specify both width and height, only width will be used.
+
+#### Zoom
+```
+/zoom:<zoom factor>
+```
+- The zoom factor of the image
+
+#### Gravity
+```html
+/gravity:<horizontal_gravity>:<vertical_gravity>
+```
+The anchor point of the crop.  Valid horizontal gravity values are `left`, `center`, `right`.  Valid vertical gravity values are `top`, `center`, `bottom`.
+
+The default is `center:center`.
