@@ -35,22 +35,33 @@ type DebugOptions struct {
 	DisableMetaCache   bool `json:"disableMetaCache"`
 }
 
+type BoundingBoxCropParams struct {
+	Index    *int     `json:"index"`
+	Padding  int      `json:"padding"`
+	Zoom     *float64 `json:"zoom"`
+	HGravity string   `json:"hGravity"`
+	VGravity string   `json:"vGravity"`
+	Largest  *bool    `json:"largest"`
+	Smallest *bool    `json:"smallest"`
+}
+
 type ImageParams struct {
 	Debug DebugOptions `json:"debug"`
 
 	MetaOnly    bool `json:"metaOnly"`
 	NeedsVision bool `json:"needsVision"`
 
-	Crop        *[]string         `json:"crop"`
-	FaceIndex   *int              `json:"faceIndex"`
-	PersonIndex *int              `json:"personIndex"`
-	Width       *int              `json:"width"`
-	Height      *int              `json:"height"`
-	AspectRatio *float64          `json:"aspectRatio"`
-	Zoom        *float64          `json:"zoom"`
-	HGravity    string            `json:"hGravity"`
-	VGravity    string            `json:"vGravity"`
-	Interesting *vips.Interesting `json:"interesting"`
+	Crop        *[]string             `json:"crop"`
+	PersonIndex *int                  `json:"personIndex"`
+	Width       *int                  `json:"width"`
+	Height      *int                  `json:"height"`
+	AspectRatio *float64              `json:"aspectRatio"`
+	Zoom        *float64              `json:"zoom"`
+	HGravity    string                `json:"hGravity"`
+	VGravity    string                `json:"vGravity"`
+	Face        BoundingBoxCropParams `json:"face"`
+	Person      BoundingBoxCropParams `json:"person"`
+	Interesting *vips.Interesting     `json:"interesting"`
 
 	BackgroundColor ColorRGBA `json:"bgColor"`
 
@@ -71,6 +82,16 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 	result := ImageParams{
 		HGravity: "center",
 		VGravity: "center",
+		Face: BoundingBoxCropParams{
+			HGravity: "center",
+			VGravity: "top",
+			Padding:  8,
+		},
+		Person: BoundingBoxCropParams{
+			HGravity: "center",
+			VGravity: "center",
+			Padding:  0,
+		},
 		ExportParams: ImageExportParams{
 			Format:  "webp",
 			Quality: 85,
@@ -180,16 +201,39 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			ar := float64(arw) / float64(arh)
 			result.AspectRatio = &ar
 		case "face":
-			if len(split) != 2 {
+			if len(split) < 2 {
 				continue
 			}
 
-			f, err := strconv.Atoi(split[1])
-			if err != nil {
-				continue
-			}
+			if split[1] == "index" && len(split) == 3 {
+				t := true
+				if split[2] == "largest" {
+					result.Face.Largest = &t
+				} else if split[2] == "smallest" {
+					result.Face.Smallest = &t
+				} else {
+					f, err := strconv.Atoi(split[2])
+					if err == nil {
+						result.Face.Index = &f
 
-			result.FaceIndex = &f
+					}
+				}
+			} else if split[1] == "pad" && len(split) == 3 {
+				f, err := strconv.Atoi(split[2])
+				if err == nil {
+					result.Face.Padding = f
+
+				}
+			} else if split[1] == "zoom" && len(split) == 3 {
+				f, err := strconv.ParseFloat(split[2], 64)
+				if err == nil {
+					f = f / 100.0
+					result.Face.Zoom = &f
+				}
+			} else if split[1] == "gravity" && len(split) == 4 {
+				result.Face.HGravity = split[2]
+				result.Face.VGravity = split[3]
+			}
 		case "person":
 			if len(split) != 2 {
 				continue

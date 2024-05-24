@@ -14,10 +14,30 @@ func cropFace(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata.I
 	sh := sourceImage.Height()
 
 	var faceBounds geometry.Box
-	if params.FaceIndex != nil && *params.FaceIndex < len(imageMeta.Faces) {
-		faceBounds = imageMeta.Faces[*params.FaceIndex].Box
+	if params.Face.Index != nil && *params.Face.Index < len(imageMeta.Faces) {
+		faceBounds = imageMeta.Faces[*params.Face.Index].Box
 	} else {
-		faceBounds = metadata.CalcFacesBounds(imageMeta.Faces)
+		if params.Face.Largest != nil {
+			area := 0.0
+			for _, face := range imageMeta.Faces {
+				faceArea := face.Box.Width * face.Box.Height
+				if faceArea > area {
+					faceBounds = face.Box
+					area = faceArea
+				}
+			}
+		} else if params.Face.Smallest != nil {
+			area := math.MaxFloat64
+			for _, face := range imageMeta.Faces {
+				faceArea := face.Box.Width * face.Box.Height
+				if faceArea < area {
+					faceBounds = face.Box
+					area = faceArea
+				}
+			}
+		} else {
+			faceBounds = metadata.CalcFacesBounds(imageMeta.Faces)
+		}
 	}
 
 	fy := int(math.Floor(faceBounds.Top * float64(sh)))
@@ -50,7 +70,7 @@ func cropFace(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata.I
 	if fh > cropSize.Height {
 		cy = fy + int(math.Floor(float64(fh)/2.0))
 	} else {
-		cy = fy - int(math.Floor(48.0*(float64(targetWidth)/1600.0)))
+		cy = fy - int(math.Floor((float64(params.Face.Padding)/512.0)*float64(sh)))
 	}
 
 	cropX := utils.Min(sw, utils.Max(0, cx-(cropSize.Width/2)))
