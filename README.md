@@ -43,11 +43,14 @@ Below is a list of the env variables you can set:
 - `DEFAULT_USER_SECRET` - The default user secret
 - `DEFAULT_USER_SOURCE_KEY` - The default user access key
 - `DEFAULT_USER_SOURCE_CONFIG_FILE` - The path to the config json file for the default source
-
+  
 ## Preview App
 The [Foxy Preview](https://github.com/jawngee/foxy-preview) repository contains a Vue.js app that can be used to preview images and mess around with the API.
 
+![Screenshot](screenshot.webp)
+
 ## Building URLs
+
 The structure of the URL is as follows:
 
 `http://localhost:8080/<source key>/<source image url or relative path base64 encoded>/<parameters>?s=<signature>`
@@ -63,15 +66,23 @@ So an example URL would be:
 The `signature` is a base64 encoded HMAC SHA256 of the URL using your `DEFAULT_USER_SECRET` as the key.
 
 ## Parameters
+
 - **Crop/Resizing**
-	- [Crop Modes](#crop-modes)
-	- [Width/Height](#width2Fheight)
-	- [Aspect Ratio](#aspect-ratio)
-	- [Zoom](#zoom)
-	- [Gravity](#gravity)
-	- [Face Index](#face-index)
-	- [Face Padding](#face-padding)
-    - [Face Zoom](#face-zoom)
+  - [Crop Modes](#crop-modes)
+  - [Width/Height](#width2Fheight)
+  - [Aspect Ratio](#aspect-ratio)
+  - [Zoom](#zoom)
+  - [Gravity](#gravity)
+  - [Face Index](#face-index)
+  - [Face Gravity](#face-gravity)
+  - [Face Padding](#face-padding)
+  - [Face Zoom](#face-zoom)
+  - [Person Index](#person-index)
+  - [Person Gravity](#person-gravity)
+  - [Person Padding](#person-padding)
+  - [Person Zoom](#person-zoom)
+- **Image Properties**
+  - [Background Color](#background-color)
 
 ### Crop/Resizing
 
@@ -94,19 +105,13 @@ The order of the crop modes is important.  If you specify:
 ```html
 /crop:face,person,crop
 ```
-
 Foxy will try to crop to faces first.  If no faces are detected, it will try to crop to people.  If no people are detected, it will do a regular crop.
 
 #### Width/Height
 ```html
-/w:<width>
+/w:<width>/h:<height>
 ```
-The width of the target image in pixels.
-
-```html
-/h:<height>
-```
-The height of the image in pixels.
+The width or height of the target image in pixels.
 
 The crop modes `face`, `person`, `fill`, `smart` and `fit` require both width and height to be set OR either width or height to be set and an aspect ratio (see below).
 
@@ -150,7 +155,7 @@ This controls how the face is anchored in the crop.  By default, it is `center:t
 
 #### Face Padding
 ```html
-/face:pad:<face_horizontal_anchor?>:<face_vertical_anchor?>
+/face:pad:<face_horizontal_anchor>:<face_vertical_anchor>
 ```
 This controls the distance of any edge of the face's bounding box from the edge of the cropped image.  This value is in pixels relative to a 1920x1920 image. For example, if you specify a padding of 24px, on a crop of 960x960 the padding would actually be 12px as 12 is 50% of 24 and 960 is 50% of 1920.
 
@@ -161,3 +166,42 @@ The default value is 48px.
 /face:zoom:<zoom>
 ```
 Controls how much the bounding box of the face fills the crop.  This value is the percentage of the crop to fill.  For example, specifying `/face:zoom:100` scale the bounding box so that it filled 100% of the crop (proportionally of course).
+
+#### Person Index
+```html
+/person:index:<face_index>
+```
+The index of the person to crop.  If the specified index is out of range, the bounding box of all people will be used.
+
+If you pass `largest` as the value, the bounding box of the largest person will be used.
+
+If you pass `smallest` as the value, the bounding box of the smallest person will be used.
+
+#### Person Gravity
+```html
+/person:gravity:<face_horizontal_anchor?>:<face_vertical_anchor?>
+```
+This controls how the person is anchored in the crop.  By default, it is `center:center`.
+
+#### Person Padding
+```html
+/person:pad:<face_horizontal_anchor>:<face_vertical_anchor>
+```
+This controls the distance of any edge of the person's bounding box from the edge of the cropped image.  This value is in pixels relative to a 1920x1920 image. For example, if you specify a padding of 24px, on a crop of 960x960 the padding would actually be 12px as 12 is 50% of 24 and 960 is 50% of 1920.
+
+The default value is 0px.
+
+#### Person Zoom
+```html
+/person:zoom:<zoom>
+```
+Controls how much the bounding box of the person fills the crop.  This value is the percentage of the crop to fill.  For example, specifying `/person:zoom:100` scale the bounding box so that it filled 100% of the crop (proportionally of course).
+
+### Image Properties
+
+#### Background Color
+```html
+/bg:<background_color>
+```
+The background color of the image.  The color is specified as a hexadecimal color code without the leading '#'.  It can be a 6 (RGB) or 8 (RGBA) character hex string.
+
