@@ -9,18 +9,9 @@ import (
 	"math"
 )
 
-func cropPerson(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata.ImageParams, sourceImage *vips.ImageRef) (*vips.ImageRef, error) {
+func cropFill(cW *int, cH *int, params *metadata.ImageParams, sourceImage *vips.ImageRef) (*vips.ImageRef, error) {
 	sw := sourceImage.Width()
 	sh := sourceImage.Height()
-
-	var faceBounds geometry.Box
-
-	var personLabels = metadata.GetPersonLabels(imageMeta.Labels)
-	if params.PersonIndex != nil && *params.PersonIndex < len(personLabels) {
-		faceBounds = *personLabels[*params.PersonIndex].Box
-	} else {
-		faceBounds = metadata.CalcPersonBounds(imageMeta.Labels)
-	}
 
 	var targetWidth int
 	var targetHeight int
@@ -43,19 +34,8 @@ func cropPerson(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata
 		cropSize.Height = int(math.Floor(float64(cropSize.Height) * (1 / *params.Zoom)))
 	}
 
-	cx := int((faceBounds.Left + (faceBounds.Width / 2.0)) * float64(sw))
-	cy := int((faceBounds.Top + (faceBounds.Height / 2.0)) * float64(sh))
-
-	cropX := utils.Min(sw, utils.Max(0, cx-(cropSize.Width/2)))
-	cropY := utils.Min(sh, utils.Max(0, cy-(cropSize.Height/2)))
-
-	if (cropX + cropSize.Width) > sw {
-		cropX = utils.Max(0, sw-cropSize.Width)
-	}
-
-	if (cropY + cropSize.Height) > sh {
-		cropY = utils.Max(0, sh-cropSize.Height)
-	}
+	cropX := utils.Min(sw, utils.Max(0, (sw/2)-(cropSize.Width/2)))
+	cropY := utils.Min(sh, utils.Max(0, (sh/2)-(cropSize.Height/2)))
 
 	err := sourceImage.Crop(
 		cropX,

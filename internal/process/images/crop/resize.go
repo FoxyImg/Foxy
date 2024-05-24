@@ -5,15 +5,6 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func cropFill(cW *int, cH *int, sourceImage *vips.ImageRef) (*vips.ImageRef, error) {
-	err := sourceImage.ThumbnailWithSize(*cW, *cH, vips.InterestingCentre, vips.SizeBoth)
-	if err != nil {
-		return nil, err
-	}
-
-	return sourceImage, nil
-}
-
 func resize(params *metadata.ImageParams, sourceImage *vips.ImageRef) (*vips.ImageRef, error) {
 	var targetWidth int
 	var targetHeight int

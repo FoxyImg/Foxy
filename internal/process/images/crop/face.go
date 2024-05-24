@@ -40,6 +40,11 @@ func cropFace(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata.I
 
 	cropSize := geometry.SizeToFitSize(targetWidth, targetHeight, sw, sh)
 
+	if params.Zoom != nil {
+		cropSize.Width = int(math.Floor(float64(cropSize.Width) * (1 / *params.Zoom)))
+		cropSize.Height = int(math.Floor(float64(cropSize.Height) * (1 / *params.Zoom)))
+	}
+
 	cx := int((faceBounds.Left + (faceBounds.Width / 2.0)) * float64(sw))
 	var cy int
 	if fh > cropSize.Height {
@@ -74,8 +79,8 @@ func cropFace(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata.I
 		return nil, err
 	}
 
-	if (cropSize.Width > targetWidth) || (cropSize.Height > targetHeight) {
-		err = sourceImage.ThumbnailWithSize(targetWidth, targetHeight, vips.InterestingNone, vips.SizeDown)
+	if (cropSize.Width != targetWidth) || (cropSize.Height != targetHeight) {
+		err = sourceImage.ThumbnailWithSize(targetWidth, targetHeight, vips.InterestingNone, vips.SizeBoth)
 		if err != nil {
 			log.Fatal("Faces Thumbnail With Size Error:", err)
 		}

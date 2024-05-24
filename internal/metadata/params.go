@@ -47,6 +47,7 @@ type ImageParams struct {
 	Width       *int              `json:"width"`
 	Height      *int              `json:"height"`
 	AspectRatio *float64          `json:"aspectRatio"`
+	Zoom        *float64          `json:"zoom"`
 	Gravity     *string           `json:"gravity"`
 	Interesting *vips.Interesting `json:"interesting"`
 
@@ -147,6 +148,17 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			}
 
 			result.Height = &h
+		case "zoom":
+			if len(split) != 2 {
+				continue
+			}
+
+			z, err := strconv.ParseFloat(split[1], 64)
+			if err != nil {
+				continue
+			}
+
+			result.Zoom = &z
 		case "ar":
 			if len(split) != 3 {
 				continue
