@@ -64,14 +64,15 @@ The `signature` is a base64 encoded HMAC SHA256 of the URL using your `DEFAULT_U
 
 ## Parameters
 - **Crop/Resizing**
-	- [[#Crop Modes]]
-	- [[#Width/Height]]
-	- [[#Aspect Ratio]]
-	- [[#Zoom]]
-	- [[#Gravity]]
-	- [[#Face Index]]
-	- [[#Face Padding]]
-	- [[#Face Zoom]]
+	- [Crop Modes](#crop-modes)
+	- [Width/Height](#width2Fheight)
+	- [Aspect Ratio](#aspect-ratio)
+	- [Zoom](#zoom)
+	- [Gravity](#gravity)
+	- [Face Index](#face-index)
+	- [Face Padding](#face-padding)
+    - [Face Zoom](#face-zoom)
+
 ### Crop/Resizing
 
 #### Crop Modes
