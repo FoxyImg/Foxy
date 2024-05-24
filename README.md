@@ -63,6 +63,15 @@ So an example URL would be:
 The `signature` is a base64 encoded HMAC SHA256 of the URL using your `DEFAULT_USER_SECRET` as the key.
 
 ## Parameters
+- **Crop/Resizing**
+	- [[#Crop Modes]]
+	- [[#Width/Height]]
+	- [[#Aspect Ratio]]
+	- [[#Zoom]]
+	- [[#Gravity]]
+	- [[#Face Index]]
+	- [[#Face Padding]]
+	- [[#Face Zoom]]
 ### Crop/Resizing
 
 #### Crop Modes
@@ -79,7 +88,13 @@ The list crop modes to try in the order they should be tried.
 
 If crop mode is omitted, the image is resized proportionally to the specified width and/or height.
 
+The order of the crop modes is important.  If you specify:
 
+```html
+/crop:face,person,crop
+```
+
+Foxy will try to crop to faces first.  If no faces are detected, it will try to crop to people.  If no people are detected, it will do a regular crop.
 
 #### Width/Height
 ```html
@@ -90,7 +105,7 @@ The width of the target image in pixels.
 ```html
 /h:<height>
 ```
-The height of the image.
+The height of the image in pixels.
 
 The crop modes `face`, `person`, `fill`, `smart` and `fit` require both width and height to be set OR either width or height to be set and an aspect ratio (see below).
 
@@ -103,10 +118,10 @@ The aspect ratio of the image, eg 16:9.
 You must specify width OR height for aspect ratio to work. If you specify both width and height, only width will be used.
 
 #### Zoom
-```
+```html
 /zoom:<zoom factor>
 ```
-- The zoom factor of the image
+The zoom factor of the crop in the range of `1` to `12`.
 
 #### Gravity
 ```html
@@ -115,3 +130,33 @@ You must specify width OR height for aspect ratio to work. If you specify both w
 The anchor point of the crop.  Valid horizontal gravity values are `left`, `center`, `right`.  Valid vertical gravity values are `top`, `center`, `bottom`.
 
 The default is `center:center`.
+
+#### Face Index
+```html
+/face:index:<face_index>
+```
+The index of the face to crop.  If the specified index is out of range, the bounding box of all faces will be used.
+
+If you pass `largest` as the value, the bounding box of the largest face will be used.
+
+If you pass `smallest` as the value, the bounding box of the smallest face will be used.
+
+#### Face Gravity
+```html
+/face:gravity:<face_horizontal_anchor?>:<face_vertical_anchor?>
+```
+This controls how the face is anchored in the crop.  By default, it is `center:top`.
+
+#### Face Padding
+```html
+/face:pad:<face_horizontal_anchor?>:<face_vertical_anchor?>
+```
+This controls the distance of any edge of the face's bounding box from the edge of the cropped image.  This value is in pixels relative to a 1920x1920 image. For example, if you specify a padding of 24px, on a crop of 960x960 the padding would actually be 12px as 12 is 50% of 24 and 960 is 50% of 1920.
+
+The default value is 48px.
+
+#### Face Zoom
+```html
+/face:zoom:<zoom>
+```
+Controls how much the bounding box of the face fills the crop.  This value is the percentage of the crop to fill.  For example, specifying `/face:zoom:100` scale the bounding box so that it filled 100% of the crop (proportionally of course).
