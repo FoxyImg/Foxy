@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -32,7 +33,10 @@ func GetSourceConfigFromCache(accessKey string) (*Config, error) {
 				expires: time.Now().Add(time.Minute * 15),
 			}
 
+			var mutex = &sync.Mutex{}
+			mutex.Lock()
 			configCache[accessKey] = result
+			mutex.Unlock()
 		} else {
 			log.Println("Using config from cache")
 		}
