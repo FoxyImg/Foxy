@@ -19,10 +19,15 @@ type WebConfig struct {
 	Url *string `json:"url"`
 }
 
+type LocalConfig struct {
+	Path *string `json:"path"`
+}
+
 type SourceConfig struct {
 	Type string `json:"type"`
 	S3Config
 	WebConfig
+	LocalConfig
 }
 
 type VisionConfig struct {

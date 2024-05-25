@@ -88,25 +88,6 @@ func HandleImagesRoute(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//if sourceConfig.Source.Type != "s3" {
-	//	w.WriteHeader(http.StatusBadRequest)
-	//	return
-	//}
-
-	//url, err := aws.GetSignedUrl(*sourceConfig, string(source), time.Hour*1)
-	//if err != nil {
-	//	w.WriteHeader(http.StatusInternalServerError)
-	//	log.Println(err)
-	//	return
-	//}
-
-	//img, err := storage.GetCachedSource(accessKey, string(source), url, params.Debug.DisableSourceCache)
-	//if err != nil {
-	//	w.WriteHeader(http.StatusInternalServerError)
-	//	log.Println(err)
-	//	return
-	//}
-
 	img, err := storage.GetSourceImage(sourceConfig, accessKey, string(source), params.Debug.DisableSourceCache)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

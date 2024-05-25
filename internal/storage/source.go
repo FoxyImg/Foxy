@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/davidbyttow/govips/v2/vips"
+
+	"github.com/cyphar/filepath-securejoin"
 )
 
 func GetSourceImage(config *config.Config, sid string, key string, disableSourceCache bool) (*vips.ImageRef, error) {
@@ -27,6 +29,25 @@ func GetSourceImage(config *config.Config, sid string, key string, disableSource
 	} else if config.Source.Type == "web" {
 		url := *config.Source.WebConfig.Url + "/" + key
 		return GetCachedSourceFromUrl(sid, key, url, disableSourceCache)
+	} else if config.Source.Type == "local" {
+
+		filePath, err := securejoin.SecureJoin(*config.Source.LocalConfig.Path, "/"+key)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = os.Stat(filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		img, err := vips.NewImageFromFile(filePath)
+		if err != nil {
+			log.Println("New Image Error:", err)
+			return nil, err
+		}
+
+		return img, nil
 	} else {
 		return nil, errors.New("unknown source type")
 	}
@@ -59,8 +80,13 @@ func GetCachedSourceFromUrl(sid string, key string, sourceImageUrl string, skipC
 		return GetSourceImageRef(sourceImageUrl)
 	}
 
-	sourceFileName := strings.TrimRight(os.Getenv("CACHE_DIR"), "/") + "/" + sid + "/" + strings.TrimLeft(key, "/")
-	_, err := os.Stat(sourceFileName)
+	sourceFilePath := "/" + sid + "/" + strings.TrimLeft(key, "/")
+	sourceFileName, err := securejoin.SecureJoin(strings.TrimRight(os.Getenv("CACHE_DIR"), "/"), sourceFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = os.Stat(sourceFileName)
 	if err == nil {
 		log.Println("Cache hit")
 		img, err := vips.NewImageFromFile(sourceFileName)

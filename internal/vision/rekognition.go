@@ -1,15 +1,12 @@
 package vision
 
 import (
-	"encoding/json"
 	"errors"
 	"foxy/internal/config"
 	"foxy/internal/geometry"
 	"foxy/internal/metadata"
 	"log"
 	"math"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,30 +16,7 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*metadata.Metadata, error) {
-	metaFileName := strings.TrimRight(os.Getenv("CACHE_DIR"), "/") + "/" + sid + "/" + strings.TrimLeft(key, "/") + ".json"
-
-	if !skipCache && os.Getenv("USE_CACHE") == "true" {
-		_, err := os.Stat(metaFileName)
-		if err == nil {
-			jsonData, err := os.ReadFile(metaFileName)
-			if err == nil {
-				meta := metadata.Metadata{}
-				jsonErr := json.Unmarshal(jsonData, &meta)
-				if jsonErr == nil {
-					log.Println("Metadata cache hit")
-					return &meta, nil
-				} else {
-					log.Println("Metadata json parse error", jsonErr)
-				}
-			} else {
-				log.Println("Error reading metadata json", err)
-			}
-		}
-	} else {
-		log.Println("Skipping meta cache")
-	}
-
+func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef) (*metadata.Metadata, error) {
 	var rekConfig config.S3Config
 	if sourceConfig.Vision.UseSourceCredentials {
 		rekConfig = sourceConfig.Source.S3Config
@@ -196,23 +170,6 @@ func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, 
 	}
 
 	result.People = metadata.GetPersonLabels(result.Labels)
-
-	if os.Getenv("USE_CACHE") == "true" {
-		metaFilePath := filepath.Dir(metaFileName)
-		err = os.MkdirAll(metaFilePath, os.ModePerm)
-		if err != nil {
-			log.Println("MkdirAll Error:", err)
-			return result, nil
-		}
-
-		jsonData, err := json.Marshal(result)
-		if err != nil {
-			log.Println("Marshal Error:", err)
-			return result, nil
-		}
-
-		_ = os.WriteFile(metaFileName, jsonData, 0644)
-	}
 
 	return result, nil
 }

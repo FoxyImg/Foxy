@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/aws/aws-sdk-go v1.53.6
+	github.com/cyphar/filepath-securejoin v0.2.5
 	github.com/davidbyttow/govips/v2 v2.14.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/joho/godotenv v1.5.1
