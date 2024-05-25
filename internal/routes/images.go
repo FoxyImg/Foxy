@@ -4,10 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"foxy/internal/aws"
 	"foxy/internal/config"
 	"foxy/internal/metadata"
 	"foxy/internal/process/images"
+	"foxy/internal/storage"
 	"foxy/internal/utils"
 	"log"
 	"net/http"
@@ -81,26 +81,33 @@ func HandleImagesRoute(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !params.Debug.DisableRenderCache {
-		cached, _ := utils.GetCachedResult(accessKey, string(source), parts[3:], params.ExportParams.Format)
+		cached, _ := storage.GetCachedResult(accessKey, string(source), parts[3:], params.ExportParams.Format)
 		if cached != nil {
 			sendImageResult(w, params.ExportParams.Format, cached)
 			return
 		}
 	}
 
-	if sourceConfig.Source.Type != "s3" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	//if sourceConfig.Source.Type != "s3" {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	return
+	//}
 
-	url, err := aws.GetSignedUrl(*sourceConfig, string(source), time.Hour*1)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
+	//url, err := aws.GetSignedUrl(*sourceConfig, string(source), time.Hour*1)
+	//if err != nil {
+	//	w.WriteHeader(http.StatusInternalServerError)
+	//	log.Println(err)
+	//	return
+	//}
 
-	img, err := utils.GetCachedSource(accessKey, string(source), url, params.Debug.DisableSourceCache)
+	//img, err := storage.GetCachedSource(accessKey, string(source), url, params.Debug.DisableSourceCache)
+	//if err != nil {
+	//	w.WriteHeader(http.StatusInternalServerError)
+	//	log.Println(err)
+	//	return
+	//}
+
+	img, err := storage.GetSourceImage(sourceConfig, accessKey, string(source), params.Debug.DisableSourceCache)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
@@ -140,7 +147,7 @@ func HandleImagesRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = utils.SetCachedResult(accessKey, string(source), parts[3:], params.ExportParams.Format, buffer)
+	_ = storage.SetCachedResult(accessKey, string(source), parts[3:], params.ExportParams.Format, buffer)
 
 	sendImageResult(w, params.ExportParams.Format, buffer)
 }

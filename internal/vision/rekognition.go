@@ -1,4 +1,4 @@
-package aws
+package vision
 
 import (
 	"encoding/json"
@@ -19,7 +19,7 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*metadata.Metadata, error) {
+func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*metadata.Metadata, error) {
 	metaFileName := strings.TrimRight(os.Getenv("CACHE_DIR"), "/") + "/" + sid + "/" + strings.TrimLeft(key, "/") + ".json"
 
 	if !skipCache && os.Getenv("USE_CACHE") == "true" {

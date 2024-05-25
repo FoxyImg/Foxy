@@ -7,3 +7,4 @@ cache
 .vscode
 .idea
 __debug_bin*
+/_configs/

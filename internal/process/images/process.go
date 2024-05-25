@@ -1,11 +1,11 @@
 package images
 
 import (
-	"foxy/internal/aws"
 	"foxy/internal/config"
 	"foxy/internal/metadata"
 	. "foxy/internal/process/images/crop"
 	"foxy/internal/utils"
+	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
 	"time"
@@ -22,15 +22,12 @@ func ProcessImage(
 
 	var imageMeta *metadata.Metadata
 	if params.NeedsVision && sourceConfig.Vision.Enabled {
-		//TODO: Fix obvious race condition
-		if sourceConfig.Vision.Type == "rekognition" {
-			foundMeta, err := aws.DetectFaces(sourceConfig, sid, key, sourceImage, params.Debug.DisableMetaCache)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			imageMeta = foundMeta
+		foundMeta, err := vision.DetectFaces(sourceConfig, sid, key, sourceImage, params.Debug.DisableMetaCache)
+		if err != nil {
+			return nil, nil, err
 		}
+
+		imageMeta = foundMeta
 
 		if params.MetaOnly {
 			return nil, imageMeta, nil

@@ -15,9 +15,14 @@ type S3Config struct {
 	Region *string `json:"region"`
 }
 
+type WebConfig struct {
+	Url *string `json:"url"`
+}
+
 type SourceConfig struct {
 	Type string `json:"type"`
 	S3Config
+	WebConfig
 }
 
 type VisionConfig struct {

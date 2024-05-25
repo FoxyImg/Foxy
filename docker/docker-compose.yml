@@ -23,3 +23,10 @@ services:
       - foxy_network
     ports:
       - "16379:6379"
+  static_files:
+    image: flashspys/nginx-static
+    container_name: static_files
+    ports:
+      - 8081:80
+    volumes:
+      - /Volumes/Projects/Archive/Images:/static
