@@ -235,16 +235,39 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 				result.Face.VGravity = split[3]
 			}
 		case "person":
-			if len(split) != 2 {
+			if len(split) < 2 {
 				continue
 			}
 
-			p, err := strconv.Atoi(split[1])
-			if err != nil {
-				continue
-			}
+			if split[1] == "index" && len(split) == 3 {
+				t := true
+				if split[2] == "largest" {
+					result.Person.Largest = &t
+				} else if split[2] == "smallest" {
+					result.Person.Smallest = &t
+				} else {
+					f, err := strconv.Atoi(split[2])
+					if err == nil {
+						result.Person.Index = &f
 
-			result.PersonIndex = &p
+					}
+				}
+			} else if split[1] == "pad" && len(split) == 3 {
+				f, err := strconv.Atoi(split[2])
+				if err == nil {
+					result.Person.Padding = f
+
+				}
+			} else if split[1] == "zoom" && len(split) == 3 {
+				f, err := strconv.ParseFloat(split[2], 64)
+				if err == nil {
+					f = f / 100.0
+					result.Person.Zoom = &f
+				}
+			} else if split[1] == "gravity" && len(split) == 4 {
+				result.Person.HGravity = split[2]
+				result.Person.VGravity = split[3]
+			}
 		case "smart":
 			if len(split) != 2 {
 				continue

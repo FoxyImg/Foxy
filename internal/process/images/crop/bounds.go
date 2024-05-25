@@ -4,9 +4,10 @@ import (
 	"foxy/internal/geometry"
 	"foxy/internal/metadata"
 	"foxy/internal/utils"
-	"github.com/davidbyttow/govips/v2/vips"
 	"log"
 	"math"
+
+	"github.com/davidbyttow/govips/v2/vips"
 )
 
 func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, boundsZoom *float64, padding int, hGravity string, vGravity string, params *metadata.ImageParams, sourceImage *vips.ImageRef) (*vips.ImageRef, error) {
@@ -42,7 +43,7 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 	actualPadding := int(math.Floor((float64(padding) / 512.0) * float64(sourceWidth)))
 	var zoom *float64 = nil
 	if boundsZoom != nil {
-		z := math.Min(float64(cropSize.Height)/float64(boundsHeight+(actualPadding*2)), float64(cropSize.Width)/float64(boundsWidth+(actualPadding*2))) * *params.Face.Zoom
+		z := math.Min(float64(cropSize.Height)/float64(boundsHeight+(actualPadding*2)), float64(cropSize.Width)/float64(boundsWidth+(actualPadding*2))) * *boundsZoom
 		zoom = &z
 	} else if cropZoom != nil {
 		zoom = cropZoom
@@ -58,7 +59,8 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 	}
 
 	var cropX int
-	if boundsHeight > cropSize.Height || hGravity == "center" {
+	// if boundsHeight > cropSize.Height || hGravity == "center" {
+	if hGravity == "center" {
 		cropX = (boundsX + int(math.Floor(float64(boundsWidth)/2.0))) - (cropSize.Width / 2)
 	} else if hGravity == "left" {
 		cropX = boundsX - actualPadding
@@ -68,7 +70,8 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 	cropX = utils.Min(sourceWidth-cropSize.Width, utils.Max(0, cropX))
 
 	var cropY int
-	if boundsHeight > cropSize.Height || vGravity == "center" {
+	// if boundsHeight > cropSize.Height || vGravity == "center" {
+	if vGravity == "center" {
 		cropY = (boundsY + int(math.Floor(float64(boundsHeight)/2.0))) - (cropSize.Height / 2)
 	} else if vGravity == "top" {
 		cropY = boundsY - actualPadding
