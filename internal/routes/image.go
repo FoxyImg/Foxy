@@ -32,7 +32,7 @@ func sendImageResult(w http.ResponseWriter, format string, buffer *[]byte) {
 	_, _ = w.Write(*buffer)
 }
 
-func HandleImagesRoute(w http.ResponseWriter, r *http.Request) {
+func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	defer utils.TrackTime(time.Now(), "Handle Images Route: "+r.URL.Path)
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")

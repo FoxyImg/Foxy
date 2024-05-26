@@ -48,6 +48,10 @@ func cropPerson(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata
 		}
 	}
 
+	if params.Person.Focus {
+		return cropFocus(personBounds.Left+(personBounds.Width/2.0), personBounds.Top+(personBounds.Height/2.0), cW, cH, params, sourceImage, params.Person.Zoom)
+	}
+
 	return cropBounds(
 		cW,
 		cH,

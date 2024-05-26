@@ -60,6 +60,13 @@ func Crop(imageMeta *metadata.Metadata, params *metadata.ImageParams, sourceImag
 					}
 
 					return croppedImage, nil
+				} else if cropMode == "focus" && cW != nil && cH != nil {
+					croppedImage, err := cropFocus(params.FocalPoint.X, params.FocalPoint.Y, cW, cH, params, sourceImage, params.FocalPoint.Zoom)
+					if err != nil {
+						return nil, err
+					}
+
+					return croppedImage, nil
 				}
 			}
 

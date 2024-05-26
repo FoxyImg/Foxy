@@ -13,7 +13,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	http.HandleFunc("/", routes.HandleImagesRoute)
+	http.HandleFunc("/", routes.GetImageHandler)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		panic(err)

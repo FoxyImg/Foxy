@@ -43,6 +43,18 @@ type BoundingBoxCropParams struct {
 	VGravity string   `json:"vGravity"`
 	Largest  *bool    `json:"largest"`
 	Smallest *bool    `json:"smallest"`
+	Focus    bool     `json:"focus"`
+}
+
+type Point struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+type FocalPointOptions struct {
+	X    float64  `json:"x"`
+	Y    float64  `json:"y"`
+	Zoom *float64 `json:"zoom"`
 }
 
 type ImageParams struct {
@@ -62,6 +74,7 @@ type ImageParams struct {
 	Face        BoundingBoxCropParams `json:"face"`
 	Person      BoundingBoxCropParams `json:"person"`
 	Interesting *vips.Interesting     `json:"interesting"`
+	FocalPoint  FocalPointOptions     `json:"focalPoint"`
 
 	BackgroundColor ColorRGBA `json:"bgColor"`
 
@@ -86,11 +99,17 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			HGravity: "center",
 			VGravity: "top",
 			Padding:  8,
+			Focus:    false,
 		},
 		Person: BoundingBoxCropParams{
 			HGravity: "center",
 			VGravity: "center",
 			Padding:  0,
+			Focus:    false,
+		},
+		FocalPoint: FocalPointOptions{
+			X: 0.5,
+			Y: 0.5,
 		},
 		ExportParams: ImageExportParams{
 			Format:  "webp",
@@ -200,6 +219,35 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 
 			ar := float64(arw) / float64(arh)
 			result.AspectRatio = &ar
+		case "fp":
+			if len(split) < 2 {
+				continue
+			}
+
+			if split[1] == "zoom" {
+				if len(split) != 3 {
+					continue
+				}
+
+				z, err := strconv.ParseFloat(split[2], 64)
+				if err == nil && z > 0 {
+					z = z / 100.0
+					result.FocalPoint.Zoom = &z
+				}
+			} else if len(split) == 3 {
+				fpx, err := strconv.ParseFloat(split[1], 64)
+				if err != nil {
+					continue
+				}
+
+				fpy, err := strconv.ParseFloat(split[2], 64)
+				if err != nil {
+					continue
+				}
+
+				result.FocalPoint.X = fpx
+				result.FocalPoint.Y = fpy
+			}
 		case "face":
 			if len(split) < 2 {
 				continue
@@ -233,6 +281,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			} else if split[1] == "gravity" && len(split) == 4 {
 				result.Face.HGravity = split[2]
 				result.Face.VGravity = split[3]
+			} else if split[1] == "focus" {
+				result.Face.Focus = true
 			}
 		case "person":
 			if len(split) < 2 {
@@ -267,6 +317,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			} else if split[1] == "gravity" && len(split) == 4 {
 				result.Person.HGravity = split[2]
 				result.Person.VGravity = split[3]
+			} else if split[1] == "focus" {
+				result.Person.Focus = true
 			}
 		case "smart":
 			if len(split) != 2 {

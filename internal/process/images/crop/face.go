@@ -36,6 +36,10 @@ func cropFace(cW *int, cH *int, imageMeta *metadata.Metadata, params *metadata.I
 		}
 	}
 
+	if params.Face.Focus {
+		return cropFocus(faceBounds.Left+(faceBounds.Width/2.0), faceBounds.Top+(faceBounds.Height/2.0), cW, cH, params, sourceImage, params.Face.Zoom)
+	}
+
 	return cropBounds(
 		cW,
 		cH,

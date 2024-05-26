@@ -1,9 +1,9 @@
 module foxy
 
-go 1.21
+go 1.22
 
 require (
-	github.com/aws/aws-sdk-go v1.53.6
+	github.com/aws/aws-sdk-go v1.53.10
 	github.com/cyphar/filepath-securejoin v0.2.5
 	github.com/davidbyttow/govips/v2 v2.14.0
 	github.com/jackc/pgx/v5 v5.5.5
@@ -23,5 +23,4 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-
 )
