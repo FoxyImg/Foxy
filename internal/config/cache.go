@@ -1,8 +1,8 @@
 package config
 
 import (
+	"foxy/internal/env"
 	"log"
-	"os"
 	"sync"
 	"time"
 )
@@ -15,7 +15,7 @@ type configCacheEntry struct {
 var configCache map[string]*configCacheEntry
 
 func GetSourceConfigFromCache(accessKey string) (*Config, error) {
-	if os.Getenv("USE_SOURCE_CONFIG_CACHE") == "true" {
+	if env.FoxyEnvironment.UseSourceConfigCache {
 		if configCache == nil {
 			configCache = make(map[string]*configCacheEntry)
 		}

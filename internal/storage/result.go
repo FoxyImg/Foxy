@@ -3,6 +3,7 @@ package storage
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"foxy/internal/env"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,7 +12,7 @@ import (
 )
 
 func GetCachedResult(sid string, key string, params []string, format string) (*[]byte, error) {
-	if os.Getenv("USE_RENDER_CACHE") != "true" {
+	if !env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil {
 		log.Println("Render cache is disabled")
 		return nil, nil
 	}
@@ -24,7 +25,7 @@ func GetCachedResult(sid string, key string, params []string, format string) (*[
 	hasher.Write([]byte(paramsKey))
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
-	hashedFileName := strings.TrimRight(os.Getenv("RENDER_CACHE_DIR"), "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
+	hashedFileName := strings.TrimRight(*env.FoxyEnvironment.RenderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
 	_, err := os.Stat(hashedFileName)
 	if err == nil {
 		log.Println("Render cache hit")
@@ -41,7 +42,7 @@ func GetCachedResult(sid string, key string, params []string, format string) (*[
 }
 
 func SetCachedResult(sid string, key string, params []string, format string, data *[]byte) error {
-	if os.Getenv("USE_RENDER_CACHE") != "true" {
+	if !env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil {
 		log.Println("Render cache is disabled")
 		return nil
 	}
@@ -54,7 +55,7 @@ func SetCachedResult(sid string, key string, params []string, format string, dat
 	hasher.Write([]byte(paramsKey))
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
-	hashedFileName := strings.TrimRight(os.Getenv("RENDER_CACHE_DIR"), "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
+	hashedFileName := strings.TrimRight(*env.FoxyEnvironment.RenderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
 
 	hashedPath := filepath.Dir(hashedFileName)
 	err := os.MkdirAll(hashedPath, os.ModePerm)

@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"foxy/internal/config"
+	"foxy/internal/env"
 	"foxy/internal/metadata"
 	"foxy/internal/process/images"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -51,7 +51,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if os.Getenv("REQUIRE_SIG_VALIDATION") == "true" {
+	if env.FoxyEnvironment.RequireSignatureValidation {
 		if sourceConfig.Secret == nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return

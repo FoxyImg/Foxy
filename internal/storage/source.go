@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"foxy/internal/aws"
 	"foxy/internal/config"
+	"foxy/internal/env"
 	"io"
 	"log"
 	"net/http"
@@ -75,13 +76,13 @@ func GetSourceImageRef(sourceImageUrl string) (*vips.ImageRef, error) {
 }
 
 func GetCachedSourceFromUrl(sid string, key string, sourceImageUrl string, skipCache bool) (*vips.ImageRef, error) {
-	if skipCache || os.Getenv("USE_CACHE") != "true" {
+	if skipCache || !env.FoxyEnvironment.UseCache || env.FoxyEnvironment.CacheDir == nil {
 		log.Println("Cache is disabled")
 		return GetSourceImageRef(sourceImageUrl)
 	}
 
 	sourceFilePath := "/" + sid + "/" + strings.TrimLeft(key, "/")
-	sourceFileName, err := securejoin.SecureJoin(strings.TrimRight(os.Getenv("CACHE_DIR"), "/"), sourceFilePath)
+	sourceFileName, err := securejoin.SecureJoin(strings.TrimRight(*env.FoxyEnvironment.CacheDir, "/"), sourceFilePath)
 	if err != nil {
 		return nil, err
 	}

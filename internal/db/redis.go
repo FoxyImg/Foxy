@@ -2,14 +2,14 @@ package db
 
 import (
 	"context"
+	"foxy/internal/env"
 	"github.com/redis/go-redis/v9"
-	"os"
 	"time"
 )
 
 func GetRedisClient() *redis.Client {
 	return redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_URL"),
+		Addr:     env.FoxyEnvironment.RedisUrl,
 		Password: "",
 		DB:       0, // use default DB
 	})

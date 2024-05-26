@@ -2,8 +2,8 @@ package db
 
 import (
 	"context"
+	"foxy/internal/env"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"os"
 )
 
 var dbpool *pgxpool.Pool
@@ -13,7 +13,7 @@ func NewClient() (*pgxpool.Pool, error) {
 		return dbpool, nil
 	}
 
-	poolConfig, err := pgxpool.ParseConfig(os.Getenv("DB_URL"))
+	poolConfig, err := pgxpool.ParseConfig(env.FoxyEnvironment.DatabaseUrl)
 	if err != nil {
 		return nil, err
 	}

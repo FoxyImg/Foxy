@@ -3,6 +3,7 @@ package vision
 import (
 	"encoding/json"
 	"foxy/internal/config"
+	"foxy/internal/env"
 	"foxy/internal/metadata"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -13,16 +14,24 @@ import (
 )
 
 func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*metadata.Metadata, error) {
-	metaFilePath := "/" + sid + "/" + strings.TrimLeft(key, "/") + ".json"
-	metaFileName, err := securejoin.SecureJoin(strings.TrimRight(os.Getenv("CACHE_DIR"), "/"), metaFilePath)
-	if err != nil {
-		return nil, err
+	var metaFilePath *string = nil
+	var metaFileName *string = nil
+
+	if env.FoxyEnvironment.CacheDir != nil {
+		mfp := "/" + sid + "/" + strings.TrimLeft(key, "/") + ".json"
+		mfn, err := securejoin.SecureJoin(strings.TrimRight(*env.FoxyEnvironment.CacheDir, "/"), mfp)
+		if err != nil {
+			return nil, err
+		}
+
+		metaFilePath = &mfp
+		metaFileName = &mfn
 	}
 
-	if !skipCache && os.Getenv("USE_CACHE") == "true" {
-		_, err := os.Stat(metaFileName)
+	if !skipCache && env.FoxyEnvironment.UseCache && env.FoxyEnvironment.CacheDir != nil && metaFilePath != nil && metaFileName != nil {
+		_, err := os.Stat(*metaFileName)
 		if err == nil {
-			jsonData, err := os.ReadFile(metaFileName)
+			jsonData, err := os.ReadFile(*metaFileName)
 			if err == nil {
 				meta := metadata.Metadata{}
 				jsonErr := json.Unmarshal(jsonData, &meta)
@@ -57,8 +66,8 @@ func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage
 	}
 
 	if meta != nil {
-		if os.Getenv("USE_CACHE") == "true" {
-			metaFilePath := filepath.Dir(metaFileName)
+		if env.FoxyEnvironment.UseCache && env.FoxyEnvironment.CacheDir != nil && metaFilePath != nil && metaFileName != nil {
+			metaFilePath := filepath.Dir(*metaFileName)
 			err := os.MkdirAll(metaFilePath, os.ModePerm)
 			if err != nil {
 				log.Println("MkdirAll Error:", err)
@@ -71,7 +80,7 @@ func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage
 				return meta, nil
 			}
 
-			_ = os.WriteFile(metaFileName, jsonData, 0644)
+			_ = os.WriteFile(*metaFileName, jsonData, 0644)
 		}
 
 		return meta, nil
