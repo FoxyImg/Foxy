@@ -58,13 +58,12 @@ type FocalPointOptions struct {
 }
 
 type ImageParams struct {
-	Debug DebugOptions `json:"debug"`
+	Debug DebugOptions `json:"-"`
 
-	MetaOnly    bool `json:"metaOnly"`
-	NeedsVision bool `json:"needsVision"`
+	MetaOnly    bool `json:"-"`
+	NeedsVision bool `json:"vision"`
 
 	Crop        *[]string             `json:"crop"`
-	PersonIndex *int                  `json:"personIndex"`
 	Width       *int                  `json:"width"`
 	Height      *int                  `json:"height"`
 	AspectRatio *float64              `json:"aspectRatio"`
@@ -76,25 +75,26 @@ type ImageParams struct {
 	Interesting *vips.Interesting     `json:"interesting"`
 	FocalPoint  FocalPointOptions     `json:"focalPoint"`
 
-	BackgroundColor ColorRGBA `json:"bgColor"`
+	BackgroundColor string `json:"bgColor"`
 
 	Rotate *int  `json:"rotate"`
 	FlipH  *bool `json:"flipH"`
 	FlipV  *bool `json:"flipV"`
 
-	Brightness float64 `json:"brightness"`
-	Saturation float64 `json:"saturation"`
-	Hue        float64 `json:"hue"`
+	Brightness *float64 `json:"brightness"`
+	Saturation *float64 `json:"saturation"`
+	Hue        *float64 `json:"hue"`
 
 	ExportParams ImageExportParams `json:"export"`
 
 	Blur *int `json:"blur"`
 }
 
-func BuildParams(pathParts []string) (*ImageParams, error) {
-	result := ImageParams{
-		HGravity: "center",
-		VGravity: "center",
+func NewImageParams() *ImageParams {
+	return &ImageParams{
+		HGravity:        "center",
+		VGravity:        "center",
+		BackgroundColor: "#00000000",
 		Face: BoundingBoxCropParams{
 			HGravity: "center",
 			VGravity: "top",
@@ -116,6 +116,10 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			Quality: 85,
 		},
 	}
+}
+
+func BuildParams(pathParts []string) (*ImageParams, error) {
+	result := *NewImageParams()
 
 	for _, part := range pathParts {
 		split := strings.Split(part, ":")
@@ -357,12 +361,7 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 				continue
 			}
 
-			c, err := ParseHexColor(split[1])
-			if err != nil {
-				continue
-			}
-
-			result.BackgroundColor = c
+			result.BackgroundColor = split[1]
 		// File Format Related
 		case "fmt":
 			if len(split) != 2 {

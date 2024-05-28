@@ -37,3 +37,11 @@ func RedisSet(key string, val interface{}, expiration time.Duration) error {
 
 	return client.Set(context.Background(), key, val, expiration).Err()
 }
+
+func RedisDelete(key string) error {
+	client := GetRedisClient()
+	//noinspection GoUnhandledErrorResult
+	defer client.Close()
+
+	return client.Del(context.Background(), key).Err()
+}

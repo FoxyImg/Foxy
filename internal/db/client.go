@@ -18,10 +18,26 @@ func NewClient() (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	dbpool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		return nil, err
 	}
 
+	dbpool = pool
+
 	return dbpool, nil
+}
+
+func NewConnection() (*pgxpool.Conn, error) {
+	pool, err := NewClient()
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }

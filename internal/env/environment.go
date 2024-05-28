@@ -22,13 +22,16 @@ type FoxyEnv struct {
 	DefaultUserKey          *string `env:"DEFAULT_USER_KEY"`
 	DefaultUserSecret       *string `env:"DEFAULT_USER_SECRET"`
 	DefaultUserSourceConfig *string `env:"DEFAULT_USER_SOURCE_CONFIG_FILE"`
+
+	AllowPresetManagement bool `env:"ALLOW_PRESET_MANAGEMENT"`
 }
 
 var FoxyEnvironment = FoxyEnv{
-	Port:                 "8080",
-	UseCache:             false,
-	UseRenderCache:       false,
-	UseSourceConfigCache: true,
+	Port:                  "8080",
+	UseCache:              false,
+	UseRenderCache:        false,
+	UseSourceConfigCache:  true,
+	AllowPresetManagement: false,
 }
 
 func Boot() {

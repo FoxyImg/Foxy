@@ -38,15 +38,13 @@ type VisionConfig struct {
 }
 
 type Config struct {
+	AppId  *string       `json:"appId"`
 	Secret *string       `json:"secret"`
 	Source *SourceConfig `json:"source"`
 	Vision *VisionConfig `json:"vision"`
 }
 
 func GetSourceConfig(sid string) (*Config, error) {
-	var configJSON string
-	var secret string
-
 	redisConfigJSON, err := db.RedisGet("config:" + sid)
 	if err != nil {
 		log.Println("RedisGet Error:", err)
@@ -61,18 +59,22 @@ func GetSourceConfig(sid string) (*Config, error) {
 			return nil, err
 		}
 	} else {
-		pg, err := db.NewClient()
-		if err != nil {
-			return nil, err
+		pg, pgErr := db.NewClient()
+		if pgErr != nil {
+			return nil, pgErr
 		}
 
-		conn, err := pg.Acquire(context.Background())
-		if err != nil {
-			return nil, err
+		conn, acquireErr := pg.Acquire(context.Background())
+		if acquireErr != nil {
+			return nil, acquireErr
 		}
 
-		res := conn.QueryRow(context.Background(), "SELECT key as secret, config FROM sources_view where sid = $1", sid)
-		err = res.Scan(&secret, &configJSON)
+		var configJSON string
+		var secret string
+		var appId string
+
+		res := conn.QueryRow(context.Background(), "SELECT app_id, key as secret, config FROM sources_view where sid = $1", sid)
+		err = res.Scan(&appId, &secret, &configJSON)
 		if err != nil {
 			return nil, err
 		}
@@ -87,10 +89,11 @@ func GetSourceConfig(sid string) (*Config, error) {
 		}
 
 		result.Secret = &secret
+		result.AppId = &appId
 
-		newJSON, err := json.Marshal(result)
-		if err != nil {
-			return nil, err
+		newJSON, newJSONErr := json.Marshal(result)
+		if newJSONErr != nil {
+			return nil, newJSONErr
 		}
 
 		err = db.RedisSet("config:"+sid, string(newJSON), 60*time.Minute)

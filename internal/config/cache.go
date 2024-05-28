@@ -12,14 +12,10 @@ type configCacheEntry struct {
 	expires time.Time
 }
 
-var configCache map[string]*configCacheEntry
+var configCache = make(map[string]*configCacheEntry)
 
 func GetSourceConfigFromCache(accessKey string) (*Config, error) {
 	if env.FoxyEnvironment.UseSourceConfigCache {
-		if configCache == nil {
-			configCache = make(map[string]*configCacheEntry)
-		}
-
 		result := configCache[accessKey]
 		if result == nil || result.expires.Before(time.Now()) {
 			log.Println("Config cache miss, fetching from db")

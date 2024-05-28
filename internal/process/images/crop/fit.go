@@ -14,6 +14,11 @@ func cropFit(cW *int, cH *int, params *metadata.ImageParams, sourceImage *vips.I
 
 	if cW != nil && cH != nil {
 		transparent := params.ExportParams.Format == "png" || params.ExportParams.Format == "webp"
+		backgroundColor, bgColorErr := metadata.ParseHexColor(params.BackgroundColor)
+		if bgColorErr != nil {
+			backgroundColor = metadata.ColorRGBA{R: 0, G: 0, B: 0, A: 0}
+		}
+
 		if transparent {
 			if !sourceImage.HasAlpha() {
 				err = sourceImage.AddAlpha()
@@ -27,7 +32,7 @@ func cropFit(cW *int, cH *int, params *metadata.ImageParams, sourceImage *vips.I
 				(*cH/2)-(sourceImage.Height()/2),
 				*cW,
 				*cH,
-				&vips.ColorRGBA{R: params.BackgroundColor.R, G: params.BackgroundColor.G, B: params.BackgroundColor.B, A: params.BackgroundColor.A},
+				&vips.ColorRGBA{R: backgroundColor.R, G: backgroundColor.G, B: backgroundColor.B, A: backgroundColor.A},
 			)
 
 			if err != nil {
@@ -39,7 +44,7 @@ func cropFit(cW *int, cH *int, params *metadata.ImageParams, sourceImage *vips.I
 				(*cH/2)-(sourceImage.Height()/2),
 				*cW,
 				*cH,
-				&vips.Color{R: params.BackgroundColor.R, G: params.BackgroundColor.G, B: params.BackgroundColor.B},
+				&vips.Color{R: backgroundColor.R, G: backgroundColor.G, B: backgroundColor.B},
 			)
 
 			if err != nil {

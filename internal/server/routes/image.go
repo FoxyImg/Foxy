@@ -12,9 +12,15 @@ import (
 	"foxy/internal/utils"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
+
+func RegisterImageRoutes() {
+	http.HandleFunc("GET /{accessKey}/{source}/{params...}", GetImageHandler)
+	http.HandleFunc("GET /{accessKey}/{source}", GetImageHandler)
+}
 
 func sendImageResult(w http.ResponseWriter, format string, buffer *[]byte) {
 	if format == "webp" {
@@ -51,7 +57,38 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if env.FoxyEnvironment.RequireSignatureValidation {
+	source, err := base64.URLEncoding.DecodeString(parts[2])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var checkSig = true
+	var params *metadata.ImageParams
+
+	if len(parts) >= 4 && strings.HasPrefix(parts[3], "@") {
+		p, version, paramsErr := metadata.FetchPreset(*sourceConfig.AppId, parts[3][1:])
+		if paramsErr != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		checkSig = false
+		params = p
+		parts = append(parts, "version:"+strconv.Itoa(version))
+	}
+
+	if params == nil {
+		p, paramsErr := metadata.BuildParams(parts[3:])
+		if paramsErr != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		params = p
+	}
+
+	if checkSig && env.FoxyEnvironment.RequireSignatureValidation {
 		if sourceConfig.Secret == nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -62,21 +99,21 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if !utils.VerifySignature(*sourceConfig.Secret, r.URL.Query().Get("s"), r.URL.Path) {
+		if !utils.VerifySignature(*sourceConfig.Secret, r.URL.Query().Get("s"), strings.TrimRight(r.URL.Path, "/")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 	}
 
-	source, err := base64.URLEncoding.DecodeString(parts[2])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	if r.URL.Query().Has("preset") {
+		paramsJSON, jsonErr := json.Marshal(params)
+		if jsonErr != nil {
+			fmt.Println("Marshal JSON Error: ", jsonErr)
+			return
+		}
 
-	params, err := metadata.BuildParams(parts[3:])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(paramsJSON)
 		return
 	}
 
@@ -100,14 +137,6 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paramsJSON, err := json.Marshal(params)
-	if err != nil {
-		fmt.Println("Marshal JSON Error: ", err)
-		return
-	}
-
-	log.Println(string(paramsJSON))
-
 	buffer, meta, err := images.ProcessImage(*sourceConfig, accessKey, string(source), params, img)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -116,7 +145,6 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if params.MetaOnly {
-		w.Header().Set("Content-Type", "application/json")
 		metaJSON, err := json.Marshal(meta)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -124,6 +152,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(metaJSON)
 		return
 	}

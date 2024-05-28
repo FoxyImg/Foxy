@@ -7,7 +7,7 @@ begin
 end;
 $$ language plpgsql;
 
-create table users (
+create table if not exists users (
    id uuid not null primary key default uuid_generate_v4(),
    name varchar(255) not null,
    email varchar(255) not null,
@@ -16,7 +16,7 @@ create table users (
 );
 create trigger users_update_updated_at_trigger before update on users for each row execute procedure update_updated_at();
 
-create table sources (
+create table if not exists sources (
     id uuid not null primary key default uuid_generate_v4(),
     sid varchar(32) not null unique,
     user_id uuid not null references users(id) on delete cascade,
@@ -28,7 +28,7 @@ create table sources (
 );
 create trigger sources_update_updated_at_trigger before update on sources for each row execute procedure update_updated_at();
 
-create table keys (
+create table if not exists keys (
   id uuid not null primary key default uuid_generate_v4(),
   user_id uuid not null references users(id) on delete cascade,
   key varchar(255) not null,
