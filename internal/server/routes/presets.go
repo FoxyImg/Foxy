@@ -16,10 +16,30 @@ import (
 )
 
 func RegisterPresetRoutes() {
-	http.Handle("GET /presets/{appId}", middleware.VerifyAuth(http.HandlerFunc(GetPresetsHandler)))
-	http.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(http.HandlerFunc(PostNewPresetHandler)))
-	http.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(http.HandlerFunc(PutUpdatePresetHandler)))
-	http.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(http.HandlerFunc(DeletePresetHandler)))
+	http.Handle("OPTIONS /presets/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+	http.Handle("OPTIONS /presets/{appId}/{presetName}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+
+	http.Handle("GET /presets/{appId}", middleware.VerifyAuth(
+		middleware.CorsHeaders(
+			http.HandlerFunc(GetPresetsHandler),
+		),
+	))
+
+	http.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
+		middleware.CorsHeaders(
+			http.HandlerFunc(PostNewPresetHandler),
+		),
+	))
+	http.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
+		middleware.CorsHeaders(
+			http.HandlerFunc(PutUpdatePresetHandler),
+		),
+	))
+	http.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
+		middleware.CorsHeaders(
+			http.HandlerFunc(DeletePresetHandler),
+		),
+	))
 }
 
 func GetPresetsHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +66,7 @@ func GetPresetsHandler(w http.ResponseWriter, r *http.Request) {
 	var name string
 	var presetJSON string
 	_, err = pgx.ForEachRow(res, []any{&name, &presetJSON}, func() error {
-		var params metadata.ImageParams
+		var params = *metadata.NewImageParams()
 		jsonErr := json.Unmarshal([]byte(presetJSON), &params)
 		if jsonErr != nil {
 			return jsonErr

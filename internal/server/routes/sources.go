@@ -18,10 +18,18 @@ type sourceInfo struct {
 }
 
 func RegisterSourceRoutes() {
-	http.Handle("GET /sources/{appId}", middleware.VerifyAuth(http.HandlerFunc(GetSourcesHandler)))
+	http.Handle("OPTIONS /sources/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+
+	http.Handle("GET /sources/{appId}", middleware.VerifyAuth(
+		middleware.CorsHeaders(
+			http.HandlerFunc(GetSourcesHandler),
+		),
+	))
 }
 
 func GetSourcesHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Get sources handler", r.Method, r.URL.Path)
+
 	conn, err := db.NewConnection()
 	if err != nil {
 		log.Println("New Connection Error:", err)

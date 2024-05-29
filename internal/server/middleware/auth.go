@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"foxy/internal/db"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 
 func VerifyAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Verify auth middleware", r.Method, r.URL.Path)
 		appId := r.PathValue("appId")
 		if appId == "" {
 			http.Error(w, "Missing App Id", http.StatusBadRequest)
