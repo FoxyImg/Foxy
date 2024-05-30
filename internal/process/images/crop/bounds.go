@@ -18,10 +18,10 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 		return cropFill(cW, cH, params, sourceImage)
 	}
 
-	boundsX := int(math.Floor(bounds.Left * float64(sourceWidth)))
-	boundsY := int(math.Floor(bounds.Top * float64(sourceHeight)))
-	boundsWidth := int(math.Floor(bounds.Width * float64(sourceWidth)))
-	boundsHeight := int(math.Floor(bounds.Height * float64(sourceHeight)))
+	boundsX := int(math.Round(bounds.Left * float64(sourceWidth)))
+	boundsY := int(math.Round(bounds.Top * float64(sourceHeight)))
+	boundsWidth := int(math.Round(bounds.Width * float64(sourceWidth)))
+	boundsHeight := int(math.Round(bounds.Height * float64(sourceHeight)))
 
 	var targetCropWidth int
 	var targetCropHeight int
@@ -40,7 +40,7 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 
 	cropSize := geometry.SizeToFitSize(targetCropWidth, targetCropHeight, sourceWidth, sourceHeight)
 
-	actualPadding := int(math.Floor((float64(padding) / 512.0) * float64(sourceWidth)))
+	actualPadding := int(math.Round((float64(padding) / 512.0) * float64(sourceWidth)))
 	var zoom *float64 = nil
 	if boundsZoom != nil {
 		z := math.Min(float64(cropSize.Height)/float64(boundsHeight+(actualPadding*2)), float64(cropSize.Width)/float64(boundsWidth+(actualPadding*2))) * *boundsZoom
@@ -50,8 +50,8 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 	}
 
 	if zoom != nil {
-		newCW := int(math.Floor(float64(cropSize.Width) * (1 / *zoom)))
-		newCH := int(math.Floor(float64(cropSize.Height) * (1 / *zoom)))
+		newCW := int(math.Round(float64(cropSize.Width) * (1 / *zoom)))
+		newCH := int(math.Round(float64(cropSize.Height) * (1 / *zoom)))
 		if newCW <= sourceWidth && newCH <= sourceHeight {
 			cropSize.Width = newCW
 			cropSize.Height = newCH
@@ -61,7 +61,7 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 	var cropX int
 	// if boundsHeight > cropSize.Height || hGravity == "center" {
 	if hGravity == "center" {
-		cropX = (boundsX + int(math.Floor(float64(boundsWidth)/2.0))) - (cropSize.Width / 2)
+		cropX = (boundsX + int(math.Round(float64(boundsWidth)/2.0))) - (cropSize.Width / 2)
 	} else if hGravity == "left" {
 		cropX = boundsX - actualPadding
 	} else {
@@ -72,7 +72,7 @@ func cropBounds(cW *int, cH *int, bounds geometry.Box, cropZoom *float64, bounds
 	var cropY int
 	// if boundsHeight > cropSize.Height || vGravity == "center" {
 	if vGravity == "center" {
-		cropY = (boundsY + int(math.Floor(float64(boundsHeight)/2.0))) - (cropSize.Height / 2)
+		cropY = (boundsY + int(math.Round(float64(boundsHeight)/2.0))) - (cropSize.Height / 2)
 	} else if vGravity == "top" {
 		cropY = boundsY - actualPadding
 	} else {

@@ -18,25 +18,25 @@ func cropFocus(focusX float64, focusY float64, cW *int, cH *int, params *metadat
 	sw := sourceImage.Width()
 	sh := sourceImage.Height()
 
-	fpx := int(math.Floor(focusX * float64(sw)))
-	fpy := int(math.Floor(focusY * float64(sh)))
+	fpx := int(math.Round(focusX * float64(sw)))
+	fpy := int(math.Round(focusY * float64(sh)))
 
 	var newCW int
 	var newCH int
 	if *cW < *cH {
 		newCH = utils.Max(*cH, utils.Min(fpy, sw-fpy))
-		newCW = int(math.Floor(float64(newCH) * (float64(*cW) / float64((*cH)))))
+		newCW = int(math.Round(float64(newCH) * (float64(*cW) / float64((*cH)))))
 	} else if *cW > *cH {
 		newCW = utils.Max(*cW, utils.Min(fpx, sw-fpx))
-		newCH = int(math.Floor(float64(newCW) * (float64(*cH) / float64(*cW))))
+		newCH = int(math.Round(float64(newCW) * (float64(*cH) / float64(*cW))))
 	} else {
 		newCW = utils.Max(*cW, utils.Min(fpx, sw-fpx, fpy, sh-fpy))
 		newCH = newCW
 	}
 
 	if zoom != nil && *zoom > 0 {
-		newCW = int(math.Floor(float64(newCW) * (1.0 / *zoom)))
-		newCH = int(math.Floor(float64(newCH) * (1.0 / *zoom)))
+		newCW = int(math.Round(float64(newCW) * (1.0 / *zoom)))
+		newCH = int(math.Round(float64(newCH) * (1.0 / *zoom)))
 	}
 
 	var cropSize geometry.Size
@@ -47,8 +47,8 @@ func cropFocus(focusX float64, focusY float64, cW *int, cH *int, params *metadat
 	}
 
 	if params.Zoom != nil {
-		cropSize.Width = int(math.Floor(float64(cropSize.Width) * (1 / *params.Zoom)))
-		cropSize.Height = int(math.Floor(float64(cropSize.Height) * (1 / *params.Zoom)))
+		cropSize.Width = int(math.Round(float64(cropSize.Width) * (1 / *params.Zoom)))
+		cropSize.Height = int(math.Round(float64(cropSize.Height) * (1 / *params.Zoom)))
 	}
 
 	cropX := utils.Min(sw-cropSize.Width, utils.Max(0, fpx-(cropSize.Width/2)))

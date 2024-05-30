@@ -50,6 +50,20 @@ func ProcessImage(
 		}
 	}
 
+	if params.Padding != nil {
+		sourceImage, err = Pad(*params.Padding, params, sourceImage)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if params.Border != nil {
+		sourceImage, err = Border(*params.Border, params, sourceImage)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	if params.ExportParams.Format == "png" {
 		png := vips.NewPngExportParams()
 		png.Quality = params.ExportParams.Quality

@@ -15,10 +15,10 @@ func Crop(imageMeta *metadata.Metadata, params *metadata.ImageParams, sourceImag
 
 		if params.AspectRatio != nil {
 			if cW != nil {
-				nh := int(math.Floor(float64(*cW) / *params.AspectRatio))
+				nh := int(math.Round(float64(*cW) / *params.AspectRatio))
 				cH = &nh
 			} else if cH != nil {
-				nw := int(math.Floor(float64(*cH) * *params.AspectRatio))
+				nw := int(math.Round(float64(*cH) * *params.AspectRatio))
 				cW = &nw
 			}
 		}

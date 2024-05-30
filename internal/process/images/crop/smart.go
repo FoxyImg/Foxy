@@ -13,8 +13,8 @@ func cropSmart(cW *int, cH *int, params *metadata.ImageParams, sourceImage *vips
 	}
 
 	if params.Zoom != nil {
-		*cW = int(math.Floor(float64(*cW) * (1 / *params.Zoom)))
-		*cH = int(math.Floor(float64(*cH) * (1 / *params.Zoom)))
+		*cW = int(math.Round(float64(*cW) * (1 / *params.Zoom)))
+		*cH = int(math.Round(float64(*cH) * (1 / *params.Zoom)))
 	}
 
 	err := sourceImage.SmartCrop(*cW, *cH, interesting)

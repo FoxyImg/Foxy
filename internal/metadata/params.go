@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"errors"
 	"slices"
 	"strconv"
 	"strings"
@@ -57,6 +58,14 @@ type FocalPointOptions struct {
 	Zoom *float64 `json:"zoom"`
 }
 
+type BorderOptions struct {
+	Color  string `json:"color"`
+	Left   int    `json:"left"`
+	Top    int    `json:"top"`
+	Right  int    `json:"right"`
+	Bottom int    `json:"bottom"`
+}
+
 type ImageParams struct {
 	Debug DebugOptions `json:"-"`
 
@@ -76,6 +85,9 @@ type ImageParams struct {
 	FocalPoint  FocalPointOptions     `json:"focalPoint"`
 
 	BackgroundColor string `json:"bgColor"`
+
+	Padding *BorderOptions `json:"padding"`
+	Border  *BorderOptions `json:"border"`
 
 	Rotate *int  `json:"rotate"`
 	FlipH  *bool `json:"flipH"`
@@ -116,6 +128,74 @@ func NewImageParams() *ImageParams {
 			Quality: 85,
 		},
 	}
+}
+
+func parseBorderOptions(split []string) (*BorderOptions, error) {
+	if len(split) <= 2 || len(split) == 5 {
+		return nil, errors.New("invalid border options")
+	}
+
+	var options = BorderOptions{
+		Color:  split[1],
+		Left:   0,
+		Top:    0,
+		Right:  0,
+		Bottom: 0,
+	}
+
+	if len(split) == 3 {
+		p, err := strconv.Atoi(split[2])
+		if err != nil {
+			return nil, err
+		}
+
+		options.Left = p
+		options.Top = p
+		options.Right = p
+		options.Bottom = p
+	} else if len(split) == 4 {
+		h, err := strconv.Atoi(split[2])
+		if err != nil {
+			return nil, err
+		}
+
+		v, err := strconv.Atoi(split[3])
+		if err != nil {
+			return nil, err
+		}
+
+		options.Left = h
+		options.Top = v
+		options.Right = h
+		options.Bottom = v
+	} else if len(split) == 6 {
+		l, err := strconv.Atoi(split[2])
+		if err != nil {
+			return nil, err
+		}
+
+		t, err := strconv.Atoi(split[3])
+		if err != nil {
+			return nil, err
+		}
+
+		r, err := strconv.Atoi(split[4])
+		if err != nil {
+			return nil, err
+		}
+
+		b, err := strconv.Atoi(split[5])
+		if err != nil {
+			return nil, err
+		}
+
+		options.Left = l
+		options.Top = t
+		options.Right = r
+		options.Bottom = b
+	}
+
+	return &options, nil
 }
 
 func BuildParams(pathParts []string) (*ImageParams, error) {
@@ -206,6 +286,20 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			}
 
 			result.Zoom = &z
+		case "pad": // pad:<color>:<left>:<top>:<right>:<bottom>
+			options, err := parseBorderOptions(split)
+			if err != nil {
+				continue
+			}
+
+			result.Padding = options
+		case "border":
+			options, err := parseBorderOptions(split)
+			if err != nil {
+				continue
+			}
+
+			result.Border = options
 		case "ar":
 			if len(split) != 3 {
 				continue

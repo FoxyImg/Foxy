@@ -30,8 +30,8 @@ func cropFill(cW *int, cH *int, params *metadata.ImageParams, sourceImage *vips.
 
 	cropSize := geometry.SizeToFitSize(targetWidth, targetHeight, sw, sh)
 	if params.Zoom != nil {
-		cropSize.Width = int(math.Floor(float64(cropSize.Width) * (1 / *params.Zoom)))
-		cropSize.Height = int(math.Floor(float64(cropSize.Height) * (1 / *params.Zoom)))
+		cropSize.Width = int(math.Round(float64(cropSize.Width) * (1 / *params.Zoom)))
+		cropSize.Height = int(math.Round(float64(cropSize.Height) * (1 / *params.Zoom)))
 	}
 
 	cropX := utils.Min(sw, utils.Max(0, (sw/2)-(cropSize.Width/2)))
