@@ -125,7 +125,7 @@ You must specify width OR height for aspect ratio to work. If you specify both w
 
 #### Zoom
 ```html
-/zoom:<zoom factor>
+/zoom:<zoom_factor>
 ```
 The zoom factor of the crop in the range of `1` to `12`.
 
@@ -149,7 +149,7 @@ If you pass `smallest` as the value, the bounding box of the smallest face will 
 
 #### Face Gravity
 ```html
-/face:gravity:<face_horizontal_anchor?>:<face_vertical_anchor?>
+/face:gravity:<face_horizontal_anchor>:<face_vertical_anchor>
 ```
 This controls how the face is anchored in the crop.  By default, it is `center:top`.
 
@@ -157,7 +157,7 @@ This controls how the face is anchored in the crop.  By default, it is `center:t
 ```html
 /face:pad:<face_horizontal_anchor>:<face_vertical_anchor>
 ```
-This controls the distance of any edge of the face's bounding box from the edge of the cropped image.  This value is in pixels relative to a 1920x1920 image. For example, if you specify a padding of 24px, on a crop of 960x960 the padding would actually be 12px as 12 is 50% of 24 and 960 is 50% of 1920.
+This controls the distance of any edge of the face's bounding box from the edge of the cropped image.  This value is in pixels relative to a 512x512 image. For example, if you specify a padding of 24px, on a crop of 960x960 the padding would actually be 12px as 12 is 50% of 24 and 960 is 50% of 1920.
 
 The default value is 48px.
 
@@ -169,7 +169,7 @@ Controls how much the bounding box of the face fills the crop.  This value is th
 
 #### Person Index
 ```html
-/person:index:<face_index>
+/person:index:<person_index>
 ```
 The index of the person to crop.  If the specified index is out of range, the bounding box of all people will be used.
 
@@ -179,15 +179,15 @@ If you pass `smallest` as the value, the bounding box of the smallest person wil
 
 #### Person Gravity
 ```html
-/person:gravity:<face_horizontal_anchor?>:<face_vertical_anchor?>
+/person:gravity:<person_horizontal_anchor>:<person_vertical_anchor>
 ```
 This controls how the person is anchored in the crop.  By default, it is `center:center`.
 
 #### Person Padding
 ```html
-/person:pad:<face_horizontal_anchor>:<face_vertical_anchor>
+/person:pad:<person_horizontal_anchor>:<person_vertical_anchor>
 ```
-This controls the distance of any edge of the person's bounding box from the edge of the cropped image.  This value is in pixels relative to a 1920x1920 image. For example, if you specify a padding of 24px, on a crop of 960x960 the padding would actually be 12px as 12 is 50% of 24 and 960 is 50% of 1920.
+This controls the distance of any edge of the person's bounding box from the edge of the cropped image.  This value is in pixels relative to a 512x512 image. For example, if you specify a padding of 24px, on a crop of 256x256 the padding would actually be 12px as 12 is 50% of 24 and 256 is 50% of 512.
 
 The default value is 0px.
 
@@ -205,3 +205,33 @@ Controls how much the bounding box of the person fills the crop.  This value is 
 ```
 The background color of the image.  The color is specified as a hexadecimal color code without the leading '#'.  It can be a 6 (RGB) or 8 (RGBA) character hex string.
 
+### Box/Padding
+
+#### Padding
+```html
+/pad:<pad_color>:<padding>
+/pad:<pad_color>:<horizontal_padding>:<vertical_padding>
+/pad:<pad_color>:<left_padding>:<top_padding>:<right_padding>:<bottom_padding>
+```
+
+#### Border
+```html
+/border:<border_color>:<border_width>
+/border:<border_color>:<horizontal_border_width>:<vertical_border_width>
+/border:<border_color>:<left_border_width>:<top_border_width>:<right_border_width>:<bottom_border_width>
+```
+
+### Redactions
+
+#### Redact
+```html
+/redact:faces:<face_list>
+/redact:people:<people_list>
+/redact:region:<region>
+/redact:color:<color>
+/redact:blur:<blur_amount>
+/redact:pixelate:<pixelate_amount>
+/redact:mask:blur:<blur_amount>
+/redact:mask:expand:<expand_percent>
+/redact:mask:pixelate:<pixelate_amount>
+```

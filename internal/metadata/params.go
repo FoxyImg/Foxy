@@ -52,6 +52,13 @@ type Point struct {
 	Y float64 `json:"y"`
 }
 
+type Rect struct {
+	Left   float64 `json:"left"`
+	Top    float64 `json:"top"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+}
+
 type FocalPointOptions struct {
 	X    float64  `json:"x"`
 	Y    float64  `json:"y"`
@@ -64,6 +71,19 @@ type BorderOptions struct {
 	Top    int    `json:"top"`
 	Right  int    `json:"right"`
 	Bottom int    `json:"bottom"`
+}
+
+type RedactOptions struct {
+	Faces        []int   `json:"faces"`
+	People       []int   `json:"people"`
+	Regions      []Rect  `json:"regions"`
+	Blur         int     `json:"blur"`
+	BlurMask     int     `json:"blurMask"`
+	ExpandMask   int     `json:"expandMask"`
+	UseColor     bool    `json:"useColor"`
+	Color        *string `json:"color"`
+	Pixelate     int     `json:"pixelate"`
+	PixelateMask int     `json:"pixelateMask"`
 }
 
 type ImageParams struct {
@@ -89,6 +109,8 @@ type ImageParams struct {
 	Padding *BorderOptions `json:"padding"`
 	Border  *BorderOptions `json:"border"`
 
+	Redact *RedactOptions `json:"redact"`
+
 	Rotate *int  `json:"rotate"`
 	FlipH  *bool `json:"flipH"`
 	FlipV  *bool `json:"flipV"`
@@ -97,9 +119,9 @@ type ImageParams struct {
 	Saturation *float64 `json:"saturation"`
 	Hue        *float64 `json:"hue"`
 
-	ExportParams ImageExportParams `json:"export"`
-
 	Blur *int `json:"blur"`
+
+	ExportParams ImageExportParams `json:"export"`
 }
 
 func NewImageParams() *ImageParams {
@@ -300,6 +322,109 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			}
 
 			result.Border = options
+		case "redact":
+			if len(split) < 3 {
+				continue
+			}
+
+			result.NeedsVision = true
+
+			if result.Redact == nil {
+				result.Redact = &RedactOptions{
+					Faces:        []int{},
+					People:       []int{},
+					Regions:      []Rect{},
+					Blur:         0,
+					UseColor:     false,
+					Pixelate:     0,
+					BlurMask:     0,
+					ExpandMask:   0,
+					PixelateMask: 0,
+				}
+			}
+
+			if split[1] == "faces" {
+				faces := strings.Split(split[2], ",")
+				if slices.Contains(faces, "all") {
+					result.Redact.Faces = append(result.Redact.Faces, -1)
+				} else {
+					for _, face := range faces {
+						f, err := strconv.Atoi(face)
+						if err != nil {
+							continue
+						}
+
+						result.Redact.Faces = append(result.Redact.Faces, f)
+					}
+				}
+			} else if split[1] == "people" {
+				people := strings.Split(split[2], ",")
+				if slices.Contains(people, "all") {
+					result.Redact.People = append(result.Redact.People, -1)
+				} else {
+					for _, person := range people {
+						p, err := strconv.Atoi(person)
+						if err != nil {
+							continue
+						}
+
+						result.Redact.People = append(result.Redact.People, p)
+					}
+				}
+			} else if split[1] == "region" {
+				regionParts := strings.Split(split[2], ",")
+				if len(regionParts) != 4 {
+					continue
+				}
+
+				l, _ := strconv.ParseFloat(regionParts[0], 64)
+				t, _ := strconv.ParseFloat(regionParts[1], 64)
+				w, _ := strconv.ParseFloat(regionParts[2], 64)
+				h, _ := strconv.ParseFloat(regionParts[3], 64)
+
+				r := Rect{
+					Left:   l,
+					Top:    t,
+					Width:  w,
+					Height: h,
+				}
+
+				result.Redact.Regions = append(result.Redact.Regions, r)
+			} else if split[1] == "blur" {
+				b, _ := strconv.Atoi(split[2])
+				result.Redact.Blur = b
+			} else if split[1] == "color" {
+				if len(split) < 3 {
+					continue
+				}
+
+				result.Redact.UseColor = true
+				result.Redact.Color = &split[2]
+			} else if split[1] == "pixelate" {
+				p, _ := strconv.Atoi(split[2])
+				result.Redact.Pixelate = p
+			} else if split[1] == "mask" {
+				if len(split) < 4 {
+					continue
+				}
+
+				if split[2] == "blur" {
+					b, err := strconv.Atoi(split[3])
+					if err == nil {
+						result.Redact.BlurMask = b
+					}
+				} else if split[2] == "expand" {
+					b, err := strconv.Atoi(split[3])
+					if err == nil {
+						result.Redact.ExpandMask = b
+					}
+				} else if split[2] == "pixelate" {
+					b, err := strconv.Atoi(split[3])
+					if err == nil {
+						result.Redact.PixelateMask = b
+					}
+				}
+			}
 		case "ar":
 			if len(split) != 3 {
 				continue

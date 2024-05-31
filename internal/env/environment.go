@@ -9,6 +9,8 @@ type FoxyEnv struct {
 	UseCache bool    `env:"USE_CACHE"`
 	CacheDir *string `env:"CACHE_DIR"`
 
+	MaxSourceSize int `env:"MAX_SOURCE_SIZE"`
+
 	UseRenderCache bool    `env:"USE_RENDER_CACHE"`
 	RenderCacheDir *string `env:"RENDER_CACHE_DIR"`
 
@@ -32,6 +34,7 @@ var FoxyEnvironment = FoxyEnv{
 	UseRenderCache:        false,
 	UseSourceConfigCache:  true,
 	AllowPresetManagement: false,
+	MaxSourceSize:         3840,
 }
 
 func Boot() {

@@ -2,6 +2,7 @@ package images
 
 import (
 	"foxy/internal/config"
+	"foxy/internal/env"
 	"foxy/internal/metadata"
 	. "foxy/internal/process/images/crop"
 	"foxy/internal/utils"
@@ -19,6 +20,24 @@ func ProcessImage(
 	sourceImage *vips.ImageRef,
 ) (*[]byte, *metadata.Metadata, error) {
 	defer utils.TrackTime(time.Now(), "Process Image")
+
+	if sourceImage.Width() > env.FoxyEnvironment.MaxSourceSize || sourceImage.Height() > env.FoxyEnvironment.MaxSourceSize {
+		scale := float64(env.FoxyEnvironment.MaxSourceSize) / float64(utils.Max(sourceImage.Width(), sourceImage.Height()))
+		err := sourceImage.Resize(scale, vips.KernelLanczos3)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		newImageBuffer, _, err := sourceImage.ExportNative()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		sourceImage, err = vips.NewImageFromBuffer(newImageBuffer)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 
 	var imageMeta *metadata.Metadata
 	if params.NeedsVision && sourceConfig.Vision.Enabled {
@@ -38,13 +57,22 @@ func ProcessImage(
 		drawDebugBounds(imageMeta, params, sourceImage)
 	}
 
-	sourceImage, err := Crop(imageMeta, params, sourceImage)
+	var err error
+
+	if params.Redact != nil {
+		sourceImage, err = Redact(sourceImage, params, imageMeta)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	sourceImage, err = Crop(imageMeta, params, sourceImage)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if params.Blur != nil {
-		err := sourceImage.GaussianBlur(float64(*params.Blur))
+		err = sourceImage.GaussianBlur(float64(*params.Blur))
 		if err != nil {
 			return nil, nil, err
 		}

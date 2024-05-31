@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 )
 
 func ptr(v reflect.Value) reflect.Value {
@@ -27,6 +28,16 @@ func LoadEnvironment(config interface{}) {
 		envKey := field.Tag.Get("env")
 		if envKey != "" {
 			switch field.Type.String() {
+			case "int":
+				envVal := os.Getenv(envKey)
+				if envVal != "" {
+					envIntVal, intErr := strconv.Atoi(envVal)
+					if intErr != nil {
+						log.Fatal("Error parsing int env var", intErr)
+					}
+
+					v.FieldByName(field.Name).SetInt(int64(envIntVal))
+				}
 			case "string":
 				envVal := os.Getenv(envKey)
 				if envVal == "" && v.Field(i).String() == "" {
