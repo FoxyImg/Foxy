@@ -41,7 +41,7 @@ type ImageParams struct {
 
 	Size *SizingOptions `json:"size,omitempty"`
 
-	BackgroundColor string `json:"bgColor"`
+	Background *BackgroundOptions `json:"background,omitempty"`
 
 	Padding *PadOptions    `json:"padding,omitempty"`
 	Border  *BorderOptions `json:"border,omitempty"`
@@ -62,13 +62,13 @@ type ImageParams struct {
 
 func NewImageParams() *ImageParams {
 	return &ImageParams{
-		Debug:           &DebugOptions{},
-		BackgroundColor: "#00000000",
-		Size:            &SizingOptions{},
-		Border:          &BorderOptions{},
-		Padding:         &PadOptions{},
-		Redact:          &RedactOptions{},
-		Stylize:         &StylizeParams{},
+		Debug:      &DebugOptions{},
+		Background: &BackgroundOptions{},
+		Size:       &SizingOptions{},
+		Border:     &BorderOptions{},
+		Padding:    &PadOptions{},
+		Redact:     &RedactOptions{},
+		Stylize:    &StylizeParams{},
 		ExportParams: ImageExportParams{
 			Format:  "webp",
 			Quality: 85,
@@ -98,14 +98,10 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 		} else if slices.Contains(result.Debug.Params(), split[0]) {
 			nv := result.Debug.ParseParams(split[0], split[1:])
 			result.NeedsVision = result.NeedsVision || nv
+		} else if slices.Contains(result.Background.Params(), split[0]) {
+			_ = result.Background.ParseParams(split[0], split[1:])
 		} else {
 			switch split[0] {
-			case "bg":
-				if len(split) != 2 {
-					continue
-				}
-
-				result.BackgroundColor = split[1]
 			// File Format Related
 			case "fmt":
 				if len(split) != 2 {
