@@ -587,7 +587,7 @@ func (sz *SizingOptions) cropFit(cW *int, cH *int, params *ImageParams, sourceIm
 	}
 
 	if cW != nil && cH != nil {
-		transparent := params.ExportParams.Format == "png" || params.ExportParams.Format == "webp"
+		transparent := params.Export != nil && params.Export.Format != nil && (*params.Export.Format == "png" || *params.Export.Format == "webp")
 		backgroundColor, bgColorErr := ParseHexColor(utils.IfNil(params.Background.Color, "00000000"))
 		if bgColorErr != nil {
 			backgroundColor = ColorRGBA{R: 0, G: 0, B: 0, A: 0}

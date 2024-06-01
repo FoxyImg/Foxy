@@ -25,7 +25,7 @@ func (opt *PadOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, 
 		return sourceImage, nil
 	}
 
-	transparent := params.ExportParams.Format == "png" || params.ExportParams.Format == "webp"
+	transparent := params.Export != nil && params.Export.Format != nil && (*params.Export.Format == "png" || *params.Export.Format == "webp")
 	color, colorErr := ParseHexColor(utils.IfNil(opt.Color, "#00000000"))
 	if colorErr != nil {
 		color = ColorRGBA{R: 0, G: 0, B: 0, A: 0}

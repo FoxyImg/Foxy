@@ -6,7 +6,6 @@ import (
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
-	"log"
 	"time"
 )
 
@@ -80,62 +79,10 @@ func ProcessImage(
 		return nil, nil, err
 	}
 
-	if params.ExportParams.Format == "png" {
-		png := vips.NewPngExportParams()
-		png.Quality = params.ExportParams.Quality
-		png.StripMetadata = true
-
-		buffer, _, err := sourceImage.ExportPng(png)
-		if err != nil {
-			log.Println("Export PNG Error:", err)
-			return nil, nil, err
-		}
-
-		return &buffer, visionMeta, nil
-	} else if params.ExportParams.Format == "webp" {
-		webp := vips.NewWebpExportParams()
-		webp.Quality = params.ExportParams.Quality
-		webp.StripMetadata = true
-		if params.ExportParams.Lossless != nil {
-			webp.Lossless = *params.ExportParams.Lossless
-		}
-		if params.ExportParams.NearLossless != nil {
-			webp.NearLossless = *params.ExportParams.NearLossless
-		}
-		if params.ExportParams.ReductionEffort != nil {
-			webp.ReductionEffort = *params.ExportParams.ReductionEffort
-		}
-
-		buffer, _, err := sourceImage.ExportWebp(webp)
-		if err != nil {
-			log.Println("Export WebP Error:", err)
-			return nil, nil, err
-		}
-
-		return &buffer, visionMeta, nil
-	} else if params.ExportParams.Format == "avif" {
-		avif := vips.NewAvifExportParams()
-		avif.Quality = params.ExportParams.Quality
-		avif.StripMetadata = true
-
-		buffer, _, err := sourceImage.ExportAvif(avif)
-		if err != nil {
-			log.Println("Export AVIF error:", err)
-			return nil, nil, err
-		}
-
-		return &buffer, visionMeta, nil
-	} else {
-		jpg := vips.NewJpegExportParams()
-		jpg.Quality = params.ExportParams.Quality
-		jpg.StripMetadata = true
-
-		buffer, _, err := sourceImage.ExportJpeg(jpg)
-		if err != nil {
-			log.Println("Export JPEG error:", err)
-			return nil, nil, err
-		}
-
-		return &buffer, visionMeta, nil
+	buffer, err := params.Export.Export(sourceImage)
+	if err != nil {
+		return nil, nil, err
 	}
+
+	return buffer, visionMeta, nil
 }

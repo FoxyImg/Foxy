@@ -1,18 +1,10 @@
 package images
 
 import (
+	"foxy/internal/utils"
 	"slices"
-	"strconv"
 	"strings"
 )
-
-type ImageExportParams struct {
-	Format          string `json:"format"`
-	Quality         int    `json:"quality"`
-	ReductionEffort *int   `json:"reductionEffort"`
-	Lossless        *bool  `json:"lossless"`
-	NearLossless    *bool  `json:"nearLossless"`
-}
 
 type ColorRGBA struct {
 	R uint8 `json:"r"`
@@ -49,6 +41,8 @@ type ImageParams struct {
 	Redact  *RedactOptions `json:"redact,omitempty"`
 	Stylize *StylizeParams `json:"stylize,omitempty"`
 
+	Export *ExportOptions `json:"export,omitempty"`
+
 	Rotate *int  `json:"rotate,omitempty"`
 	FlipH  *bool `json:"flipH,omitempty"`
 	FlipV  *bool `json:"flipV,omitempty"`
@@ -56,8 +50,6 @@ type ImageParams struct {
 	Brightness *float64 `json:"brightness,omitempty"`
 	Saturation *float64 `json:"saturation,omitempty"`
 	Hue        *float64 `json:"hue,omitempty"`
-
-	ExportParams ImageExportParams `json:"export"`
 }
 
 func NewImageParams() *ImageParams {
@@ -69,9 +61,9 @@ func NewImageParams() *ImageParams {
 		Padding:    &PadOptions{},
 		Redact:     &RedactOptions{},
 		Stylize:    &StylizeParams{},
-		ExportParams: ImageExportParams{
-			Format:  "webp",
-			Quality: 85,
+		Export: &ExportOptions{
+			Format:  utils.Ptr("webp"),
+			Quality: utils.Ptr(85),
 		},
 	}
 }
@@ -100,59 +92,11 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			result.NeedsVision = result.NeedsVision || nv
 		} else if slices.Contains(result.Background.Params(), split[0]) {
 			_ = result.Background.ParseParams(split[0], split[1:])
-		} else {
-			switch split[0] {
-			// File Format Related
-			case "fmt":
-				if len(split) != 2 {
-					continue
-				}
-
-				result.ExportParams.Format = split[1]
-			case "q":
-				if len(split) != 2 {
-					continue
-				}
-
-				q, err := strconv.Atoi(split[1])
-				if err != nil {
-					continue
-				}
-
-				result.ExportParams.Quality = q
-			case "nloss":
-				if len(split) != 2 {
-					continue
-				}
-
-				nloss := split[1] == "1"
-
-				result.ExportParams.NearLossless = &nloss
-			case "lossless":
-				if len(split) != 2 {
-					continue
-				}
-
-				loss := split[1] == "1"
-
-				result.ExportParams.Lossless = &loss
-			case "reduction":
-				if len(split) != 2 {
-					continue
-				}
-
-				e, err := strconv.Atoi(split[1])
-				if err != nil {
-					continue
-				}
-
-				result.ExportParams.ReductionEffort = &e
-			// Metadata
-			case "meta":
-				result.MetaOnly = true
-				result.NeedsVision = true
-			default:
-			}
+		} else if slices.Contains(result.Export.Params(), split[0]) {
+			_ = result.Export.ParseParams(split[0], split[1:])
+		} else if split[0] == "meta" {
+			result.MetaOnly = true
+			result.NeedsVision = true
 		}
 
 	}

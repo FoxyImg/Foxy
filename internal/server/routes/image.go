@@ -117,9 +117,9 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !params.Debug.DisableRenderCache {
-		cached, _ := storage.GetCachedResult(accessKey, string(source), parts[3:], params.ExportParams.Format)
+		cached, _ := storage.GetCachedResult(accessKey, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"))
 		if cached != nil {
-			sendImageResult(w, params.ExportParams.Format, cached)
+			sendImageResult(w, utils.IfNil(params.Export.Format, "jpg"), cached)
 			return
 		}
 	}
@@ -156,7 +156,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = storage.SetCachedResult(accessKey, string(source), parts[3:], params.ExportParams.Format, buffer)
+	_ = storage.SetCachedResult(accessKey, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"), buffer)
 
-	sendImageResult(w, params.ExportParams.Format, buffer)
+	sendImageResult(w, utils.IfNil(params.Export.Format, "jpg"), buffer)
 }
