@@ -3,8 +3,6 @@ package images
 import (
 	"foxy/internal/config"
 	"foxy/internal/env"
-	"foxy/internal/metadata"
-	. "foxy/internal/process/images/crop"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -16,9 +14,9 @@ func ProcessImage(
 	sourceConfig config.Config,
 	sid string,
 	key string,
-	params *metadata.ImageParams,
+	params *ImageParams,
 	sourceImage *vips.ImageRef,
-) (*[]byte, *metadata.Metadata, error) {
+) (*[]byte, *vision.Metadata, error) {
 	defer utils.TrackTime(time.Now(), "Process Image")
 
 	if sourceImage.Width() > env.FoxyEnvironment.MaxSourceSize || sourceImage.Height() > env.FoxyEnvironment.MaxSourceSize {
@@ -39,57 +37,47 @@ func ProcessImage(
 		}
 	}
 
-	var imageMeta *metadata.Metadata
+	var visionMeta *vision.Metadata
 	if params.NeedsVision && sourceConfig.Vision.Enabled {
 		foundMeta, err := vision.DetectFaces(sourceConfig, sid, key, sourceImage, params.Debug.DisableMetaCache)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		imageMeta = foundMeta
+		visionMeta = foundMeta
 
 		if params.MetaOnly {
-			return nil, imageMeta, nil
+			return nil, visionMeta, nil
 		}
-	}
-
-	if (params.Debug.Faces || params.Debug.AllFaces || params.Debug.People || params.Debug.AllPeople || params.Debug.OtherLabels) && imageMeta != nil {
-		drawDebugBounds(imageMeta, params, sourceImage)
 	}
 
 	var err error
 
-	if params.Redact != nil {
-		sourceImage, err = Redact(sourceImage, params, imageMeta)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	sourceImage, err = Crop(imageMeta, params, sourceImage)
+	sourceImage, err = params.Redact.Process(sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if params.Blur != nil {
-		err = sourceImage.GaussianBlur(float64(*params.Blur))
-		if err != nil {
-			return nil, nil, err
-		}
+	_, _ = params.Debug.Process(sourceImage, params, visionMeta)
+
+	sourceImage, err = params.Size.Process(sourceImage, params, visionMeta)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	if params.Padding != nil {
-		sourceImage, err = Pad(*params.Padding, params, sourceImage)
-		if err != nil {
-			return nil, nil, err
-		}
+	sourceImage, err = params.Stylize.Process(sourceImage, params, visionMeta)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	if params.Border != nil {
-		sourceImage, err = Border(*params.Border, params, sourceImage)
-		if err != nil {
-			return nil, nil, err
-		}
+	sourceImage, err = params.Padding.Process(sourceImage, params, visionMeta)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sourceImage, err = params.Border.Process(sourceImage, params, visionMeta)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	if params.ExportParams.Format == "png" {
@@ -103,7 +91,7 @@ func ProcessImage(
 			return nil, nil, err
 		}
 
-		return &buffer, imageMeta, nil
+		return &buffer, visionMeta, nil
 	} else if params.ExportParams.Format == "webp" {
 		webp := vips.NewWebpExportParams()
 		webp.Quality = params.ExportParams.Quality
@@ -124,7 +112,7 @@ func ProcessImage(
 			return nil, nil, err
 		}
 
-		return &buffer, imageMeta, nil
+		return &buffer, visionMeta, nil
 	} else if params.ExportParams.Format == "avif" {
 		avif := vips.NewAvifExportParams()
 		avif.Quality = params.ExportParams.Quality
@@ -136,7 +124,7 @@ func ProcessImage(
 			return nil, nil, err
 		}
 
-		return &buffer, imageMeta, nil
+		return &buffer, visionMeta, nil
 	} else {
 		jpg := vips.NewJpegExportParams()
 		jpg.Quality = params.ExportParams.Quality
@@ -148,6 +136,6 @@ func ProcessImage(
 			return nil, nil, err
 		}
 
-		return &buffer, imageMeta, nil
+		return &buffer, visionMeta, nil
 	}
 }

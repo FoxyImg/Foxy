@@ -2,22 +2,40 @@ package images
 
 import (
 	"foxy/internal/geometry"
-	"foxy/internal/metadata"
+	"foxy/internal/utils"
+	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func Pad(options metadata.BorderOptions, params *metadata.ImageParams, sourceImage *vips.ImageRef) (*vips.ImageRef, error) {
+type PadOptions struct {
+	BorderOptions
+}
+
+func (*PadOptions) Params() []string {
+	return []string{"pad"}
+}
+
+func (opt *PadOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+	l := utils.IfNil(opt.Left, 0)
+	t := utils.IfNil(opt.Top, 0)
+	r := utils.IfNil(opt.Right, 0)
+	b := utils.IfNil(opt.Bottom, 0)
+
+	if l == 0 && t == 0 && r == 0 && b == 0 {
+		return sourceImage, nil
+	}
+
 	transparent := params.ExportParams.Format == "png" || params.ExportParams.Format == "webp"
-	color, colorErr := metadata.ParseHexColor(options.Color)
+	color, colorErr := ParseHexColor(utils.IfNil(opt.Color, "#00000000"))
 	if colorErr != nil {
-		color = metadata.ColorRGBA{R: 0, G: 0, B: 0, A: 0}
+		color = ColorRGBA{R: 0, G: 0, B: 0, A: 0}
 	}
 
 	ow := sourceImage.Width()
 	oh := sourceImage.Height()
 
-	newW := ow - (options.Left + options.Right)
-	newH := oh - (options.Top + options.Bottom)
+	newW := ow - (l + r)
+	newH := oh - (t + b)
 
 	newSize := geometry.SizeToFillSize(sourceImage.Width(), sourceImage.Height(), newW, newH, true)
 	err := sourceImage.ThumbnailWithSize(newSize.Width, newSize.Height, vips.InterestingNone, vips.SizeDown)
@@ -40,12 +58,9 @@ func Pad(options metadata.BorderOptions, params *metadata.ImageParams, sourceIma
 			}
 		}
 
-		//cx := (ow / 2) - (sourceImage.Width() / 2)
-		//cy := (oh / 2) - (sourceImage.Height() / 2)
-
 		err = sourceImage.EmbedBackgroundRGBA(
-			options.Left,
-			options.Top,
+			l,
+			t,
 			ow,
 			oh,
 			&vips.ColorRGBA{R: color.R, G: color.G, B: color.B, A: color.A},
@@ -55,13 +70,9 @@ func Pad(options metadata.BorderOptions, params *metadata.ImageParams, sourceIma
 			return sourceImage, err
 		}
 	} else {
-
-		//cx := (ow / 2) - (sourceImage.Width() / 2)
-		//cy := (oh / 2) - (sourceImage.Height() / 2)
-
 		err = sourceImage.EmbedBackground(
-			options.Left,
-			options.Top,
+			l,
+			t,
 			ow,
 			oh,
 			&vips.Color{R: color.R, G: color.G, B: color.B},

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"foxy/internal/config"
 	"foxy/internal/env"
-	"foxy/internal/metadata"
 	"foxy/internal/process/images"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
@@ -64,10 +63,10 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var checkSig = true
-	var params *metadata.ImageParams
+	var params *images.ImageParams
 
 	if len(parts) >= 4 && strings.HasPrefix(parts[3], "@") {
-		p, version, paramsErr := metadata.FetchPreset(*sourceConfig.AppId, parts[3][1:])
+		p, version, paramsErr := images.FetchPreset(*sourceConfig.AppId, parts[3][1:])
 		if paramsErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -79,7 +78,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if params == nil {
-		p, paramsErr := metadata.BuildParams(parts[3:])
+		p, paramsErr := images.BuildParams(parts[3:])
 		if paramsErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return

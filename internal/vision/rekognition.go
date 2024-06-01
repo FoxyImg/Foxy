@@ -4,7 +4,6 @@ import (
 	"errors"
 	"foxy/internal/config"
 	"foxy/internal/geometry"
-	"foxy/internal/metadata"
 	"log"
 	"math"
 	"strings"
@@ -16,7 +15,7 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef) (*metadata.Metadata, error) {
+func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef) (*Metadata, error) {
 	var rekConfig config.S3Config
 	if sourceConfig.Vision.UseSourceCredentials {
 		rekConfig = sourceConfig.Source.S3Config
@@ -106,10 +105,10 @@ func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, 
 		return nil, err
 	}
 
-	var result = &metadata.Metadata{}
-	result.Faces = make([]metadata.Face, len(facesResult.FaceDetails))
-	result.Labels = make([]metadata.Label, len(labelsResults.Labels))
-	result.ModerationLabels = make([]metadata.Label, len(moderationResults.ModerationLabels))
+	var result = &Metadata{}
+	result.Faces = make([]Face, len(facesResult.FaceDetails))
+	result.Labels = make([]Label, len(labelsResults.Labels))
+	result.ModerationLabels = make([]Label, len(moderationResults.ModerationLabels))
 
 	for idx, face := range facesResult.FaceDetails {
 		result.Faces[idx].Box.Left = *face.BoundingBox.Left
@@ -121,7 +120,7 @@ func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, 
 		}
 		result.Faces[idx].Confidence = *face.Confidence
 		if face.AgeRange != nil {
-			result.Faces[idx].Age = &metadata.AgeRange{
+			result.Faces[idx].Age = &AgeRange{
 				High: *face.AgeRange.High,
 				Low:  *face.AgeRange.Low,
 			}
@@ -169,7 +168,7 @@ func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, 
 		result.ModerationLabels[idx].Confidence = *label.Confidence
 	}
 
-	result.People = metadata.GetPersonLabels(result.Labels)
+	result.People = GetPersonLabels(result.Labels)
 
 	return result, nil
 }

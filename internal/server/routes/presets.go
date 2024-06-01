@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"foxy/internal/db"
-	"foxy/internal/metadata"
+	"foxy/internal/process/images"
 	"foxy/internal/server/middleware"
 	"github.com/gosimple/slug"
 	"github.com/jackc/pgx/v5"
@@ -62,11 +62,11 @@ func GetPresetsHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer res.Close()
 
-	var presets = make(map[string]metadata.ImageParams)
+	var presets = make(map[string]images.ImageParams)
 	var name string
 	var presetJSON string
 	_, err = pgx.ForEachRow(res, []any{&name, &presetJSON}, func() error {
-		var params = *metadata.NewImageParams()
+		var params = *images.NewImageParams()
 		jsonErr := json.Unmarshal([]byte(presetJSON), &params)
 		if jsonErr != nil {
 			return jsonErr
@@ -126,7 +126,7 @@ func PostNewPresetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _, err = metadata.FetchPreset(appId, presetName)
+	_, _, err = images.FetchPreset(appId, presetName)
 	if err != nil {
 		log.Println("Fetch Preset Error:", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -161,7 +161,7 @@ func PutUpdatePresetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _, err = metadata.FetchPreset(appId, presetName)
+	_, _, err = images.FetchPreset(appId, presetName)
 	if err != nil {
 		log.Println("Fetch Preset Error:", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -177,12 +177,12 @@ func PutUpdatePresetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
-	delete(metadata.PresetCache, appId+":"+presetName)
+	delete(images.PresetCache, appId+":"+presetName)
 	mutex.Unlock()
 
 	_ = db.RedisDelete(appId + ":" + presetName)
 
-	_, _, err = metadata.FetchPreset(appId, presetName)
+	_, _, err = images.FetchPreset(appId, presetName)
 	if err != nil {
 		log.Println("Fetch Preset Error:", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -214,7 +214,7 @@ func DeletePresetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
-	delete(metadata.PresetCache, appId+":"+presetName)
+	delete(images.PresetCache, appId+":"+presetName)
 	mutex.Unlock()
 
 	_ = db.RedisDelete(appId + ":" + presetName)

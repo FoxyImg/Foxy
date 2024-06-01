@@ -1,4 +1,4 @@
-package metadata
+package vision
 
 import (
 	"foxy/internal/geometry"
@@ -59,16 +59,6 @@ type Metadata struct {
 	ModerationLabels []Label `json:"moderationLabels"`
 }
 
-func HasPersonLabel(labels []Label) bool {
-	for _, label := range labels {
-		if slices.Contains(PersonLabels, label.Name) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func CalcFacesBounds(faces []Face) geometry.Box {
 	var boxes []geometry.Box
 	for _, face := range faces {
@@ -81,30 +71,6 @@ func CalcFacesBounds(faces []Face) geometry.Box {
 func CalcLabelsBounds(labels []Label) geometry.Box {
 	var boxes []geometry.Box
 	for _, label := range labels {
-		if label.Box != nil {
-			boxes = append(boxes, *label.Box)
-		}
-	}
-
-	if len(boxes) == 0 {
-		return geometry.Box{
-			Left:   0,
-			Top:    0,
-			Width:  0,
-			Height: 0,
-		}
-	}
-
-	return geometry.CalcBoxBounds(boxes)
-}
-
-func CalcPersonBounds(labels []Label) geometry.Box {
-	var boxes []geometry.Box
-	for _, label := range labels {
-		if !slices.Contains(PersonLabels, label.Name) {
-			continue
-		}
-
 		if label.Box != nil {
 			boxes = append(boxes, *label.Box)
 		}

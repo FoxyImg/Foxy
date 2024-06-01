@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"foxy/internal/config"
 	"foxy/internal/env"
-	"foxy/internal/metadata"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
@@ -13,7 +12,7 @@ import (
 	"strings"
 )
 
-func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*metadata.Metadata, error) {
+func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*Metadata, error) {
 	var metaFilePath *string = nil
 	var metaFileName *string = nil
 
@@ -33,7 +32,7 @@ func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage
 		if err == nil {
 			jsonData, err := os.ReadFile(*metaFileName)
 			if err == nil {
-				meta := metadata.Metadata{}
+				meta := Metadata{}
 				jsonErr := json.Unmarshal(jsonData, &meta)
 				if jsonErr == nil {
 					log.Println("Metadata cache hit")
@@ -53,7 +52,7 @@ func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage
 		return nil, nil
 	}
 
-	var meta *metadata.Metadata
+	var meta *Metadata
 	if sourceConfig.Vision.Type == "rekognition" {
 		m, err := RekognitionDetectFaces(sourceConfig, sid, key, sourceImage)
 		if err != nil {

@@ -3,12 +3,86 @@ package images
 import (
 	"fmt"
 	"foxy/internal/geometry"
-	"foxy/internal/metadata"
+	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
 	"math"
+	"slices"
 	"strconv"
+	"strings"
 )
+
+type DebugOptions struct {
+	Faces       bool `json:"faces"`
+	AllFaces    bool `json:"allFaces"`
+	People      bool `json:"people"`
+	AllPeople   bool `json:"allPeople"`
+	OtherLabels bool `json:"otherLabels"`
+
+	DisableSourceCache bool `json:"disableSourceCache"`
+	DisableRenderCache bool `json:"disableRenderCache"`
+	DisableMetaCache   bool `json:"disableMetaCache"`
+}
+
+func (*DebugOptions) Params() []string {
+	return []string{"debug", "nocache"}
+}
+
+func (opt *DebugOptions) ParseParams(param string, options []string) (needsVision bool) {
+	needsVision = false
+
+	switch param {
+	case "debug":
+		if len(options) != 1 {
+			return
+		}
+
+		types := strings.Split(options[0], ",")
+		if slices.Contains(types, "faces") {
+			needsVision = true
+			opt.Faces = true
+		}
+
+		if slices.Contains(types, "all-faces") {
+			needsVision = true
+			opt.AllFaces = true
+		}
+
+		if slices.Contains(types, "people") {
+			needsVision = true
+			opt.People = true
+		}
+
+		if slices.Contains(types, "all-people") {
+			needsVision = true
+			opt.AllPeople = true
+		}
+
+		if slices.Contains(types, "other-labels") {
+			needsVision = true
+			opt.OtherLabels = true
+		}
+	case "nocache":
+		if len(options) != 1 {
+			return
+		}
+
+		types := strings.Split(options[0], ",")
+		opt.DisableSourceCache = slices.Contains(types, "source")
+		opt.DisableRenderCache = slices.Contains(types, "render")
+		opt.DisableMetaCache = slices.Contains(types, "meta")
+	}
+
+	return
+}
+
+func (opt *DebugOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+	if (opt.Faces || opt.AllFaces || opt.People || opt.AllPeople || opt.OtherLabels) && imageMeta != nil {
+		drawDebugBounds(imageMeta, params, sourceImage)
+	}
+
+	return sourceImage, nil
+}
 
 func drawBounds(label string, image *vips.ImageRef, box geometry.Box, color vips.ColorRGBA) {
 	log.Println("Draw Rect:", box)
@@ -60,16 +134,16 @@ func drawBounds(label string, image *vips.ImageRef, box geometry.Box, color vips
 	}
 }
 
-func drawDebugBounds(imageMeta *metadata.Metadata, params *metadata.ImageParams, sourceImage *vips.ImageRef) {
+func drawDebugBounds(imageMeta *vision.Metadata, params *ImageParams, sourceImage *vips.ImageRef) {
 	if params.Debug.OtherLabels {
-		otherLabel := metadata.FilterNonPersonLabels(imageMeta.Labels)
+		otherLabel := vision.FilterNonPersonLabels(imageMeta.Labels)
 		for _, label := range otherLabel {
 			drawBounds(label.Name, sourceImage, *label.Box, vips.ColorRGBA{R: 255, G: 0, B: 255, A: 255})
 		}
 	}
 
 	if params.Debug.AllPeople && len(imageMeta.People) > 0 {
-		drawBounds("all people", sourceImage, metadata.CalcLabelsBounds(imageMeta.People), vips.ColorRGBA{R: 0, G: 255, B: 255, A: 255})
+		drawBounds("all people", sourceImage, vision.CalcLabelsBounds(imageMeta.People), vips.ColorRGBA{R: 0, G: 255, B: 255, A: 255})
 	}
 
 	if params.Debug.People && len(imageMeta.People) > 0 {
@@ -82,7 +156,7 @@ func drawDebugBounds(imageMeta *metadata.Metadata, params *metadata.ImageParams,
 	}
 
 	if params.Debug.AllFaces && len(imageMeta.Faces) > 0 {
-		drawBounds("all faces", sourceImage, metadata.CalcFacesBounds(imageMeta.Faces), vips.ColorRGBA{R: 255, G: 255, B: 0, A: 255})
+		drawBounds("all faces", sourceImage, vision.CalcFacesBounds(imageMeta.Faces), vips.ColorRGBA{R: 255, G: 255, B: 0, A: 255})
 	}
 
 	if params.Debug.Faces && len(imageMeta.Faces) > 0 {
