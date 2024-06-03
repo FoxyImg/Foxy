@@ -38,8 +38,10 @@ type ImageParams struct {
 	Padding *PadOptions    `json:"padding,omitempty"`
 	Border  *BorderOptions `json:"border,omitempty"`
 
-	Redact  *RedactOptions `json:"redact,omitempty"`
-	Stylize *StylizeParams `json:"stylize,omitempty"`
+	Redact      *RedactOptions     `json:"redact,omitempty"`
+	Stylize     *StylizeParams     `json:"stylize,omitempty"`
+	GradientMap *GradientMapParams `json:"gradientMap,omitempty"`
+	Adjustments *AdjustmentsParams `json:"adjustments,omitempty"`
 
 	Export *ExportOptions `json:"export,omitempty"`
 
@@ -54,13 +56,15 @@ type ImageParams struct {
 
 func NewImageParams() *ImageParams {
 	return &ImageParams{
-		Debug:      &DebugOptions{},
-		Background: &BackgroundOptions{},
-		Size:       &SizingOptions{},
-		Border:     &BorderOptions{},
-		Padding:    &PadOptions{},
-		Redact:     &RedactOptions{},
-		Stylize:    &StylizeParams{},
+		Debug:       &DebugOptions{},
+		Background:  &BackgroundOptions{},
+		Size:        &SizingOptions{},
+		Border:      &BorderOptions{},
+		Padding:     &PadOptions{},
+		Redact:      &RedactOptions{},
+		Stylize:     &StylizeParams{},
+		GradientMap: &GradientMapParams{},
+		Adjustments: &AdjustmentsParams{},
 		Export: &ExportOptions{
 			Format:  utils.Ptr("webp"),
 			Quality: utils.Ptr(85),
@@ -77,9 +81,12 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 		if slices.Contains(result.Size.Params(), split[0]) {
 			nv := result.Size.ParseParams(split[0], split[1:])
 			result.NeedsVision = result.NeedsVision || nv
+		} else if slices.Contains(result.Adjustments.Params(), split[0]) {
+			_ = result.Adjustments.ParseParams(split[0], split[1:])
+		} else if slices.Contains(result.GradientMap.Params(), split[0]) {
+			_ = result.GradientMap.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Stylize.Params(), split[0]) {
-			nv := result.Stylize.ParseParams(split[0], split[1:])
-			result.NeedsVision = result.NeedsVision || nv
+			_ = result.Stylize.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Border.Params(), split[0]) {
 			_ = result.Border.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Padding.Params(), split[0]) {

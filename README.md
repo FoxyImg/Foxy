@@ -197,6 +197,120 @@ The default value is 0px.
 ```
 Controls how much the bounding box of the person fills the crop.  This value is the percentage of the crop to fill.  For example, specifying `/person:zoom:100` scale the bounding box so that it filled 100% of the crop (proportionally of course).
 
+### Adjustments
+
+#### Brightness
+```html
+/bri:<brightness>
+```
+The brightness of the image, 0 to 200.
+
+#### Saturation
+```html
+/sat:<saturation>
+```
+The saturation of the image, 0 to 200.
+
+#### Exposure
+```html
+/exp:<exposure>
+```
+The exposure of the image, -100 to 100.
+
+#### Gamma
+```html
+/gamma:<gamma>
+```
+The gamma of the image, 0 to 10.  Default is 1
+
+#### Hue
+```html
+/hue:<hue>
+```
+The hue of the image, -360 to 360.
+
+### Stylize
+
+#### Blur
+```html
+/blur:<blur>
+```
+Apply a gaussian blur to the image, 0 to 512.
+
+#### Pixelate
+```html
+/px:<pixelate>
+```
+Apply a pixelate effect to the image, 0 to 512.
+
+#### Stylize Order
+```html
+/stylize:<order>
+```
+The order of the stylize effects to apply separated by a comma.  Valid values are `blur`, `px`.
+
+
+### Gradient Map
+
+#### Monochrome
+```html
+/gm:mono:<true|false>
+```
+Before applying the gradient map, convert the image to monochrome.  Defaults to true.
+
+#### Blend Mode
+```html
+/gm:blend:<blend_mode>
+```
+The blend mode to use when applying the gradient map.  Valid values are:
+
+| Mode       | Value |
+|------------|-------|
+| Clear      | 0     |
+| Source     | 1     |
+| Over       | 2     |
+| In         | 3     |
+| Out        | 4     |
+| Atop       | 5     |
+| Dest       | 6     |
+| DestOver   | 7     |
+| DestIn     | 8     |
+| DestOut    | 9     |
+| DestAtop   | 10    |
+| XOR        | 11    |
+| Add        | 12    |
+| Saturate   | 13    |
+| Multiply   | 14    |
+| Screen     | 15    |
+| Overlay    | 16    |
+| Darken     | 17    |
+| Lighten    | 18    |
+| ColorDodge | 19    |
+| ColorBurn  | 20    |
+| HardLight  | 21    |
+| SoftLight  | 22    |
+| Difference | 23    |
+| Exclusion  | 24    |
+
+#### Blur
+```html
+/gm:blur:<blur>
+```
+Apply a gaussian blur to the mapped image, 0 to 512.
+
+#### Opacity
+```html
+/gm:opacity:<opacity>
+```
+The opacity of the mapped image when composited with the source image, 0 to 100.  Defaults to 100.
+
+#### Stops
+```html
+/gm:stops:<stop1>,<color1>:<stop2>,<color2>:...
+```
+The stops and colors to use when applying the gradient map.  Minimum two stops are required.
+  
+
 ### Image Properties
 
 #### Background Color
@@ -214,12 +328,15 @@ The background color of the image.  The color is specified as a hexadecimal colo
 /pad:<pad_color>:<left_padding>:<top_padding>:<right_padding>:<bottom_padding>
 ```
 
+Adds interior padding to the image.
+
 #### Border
 ```html
 /border:<border_color>:<border_width>
 /border:<border_color>:<horizontal_border_width>:<vertical_border_width>
 /border:<border_color>:<left_border_width>:<top_border_width>:<right_border_width>:<bottom_border_width>
 ```
+Adds an external border to the image.
 
 ### Redactions
 
@@ -235,3 +352,4 @@ The background color of the image.  The color is specified as a hexadecimal colo
 /redact:mask:expand:<expand_percent>
 /redact:mask:pixelate:<pixelate_amount>
 ```
+Blurs or pixelates the faces, people, or regions in the image.

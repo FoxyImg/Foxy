@@ -64,6 +64,16 @@ func ProcessImage(
 		return nil, nil, err
 	}
 
+	sourceImage, err = params.Adjustments.Process(sourceImage, params, visionMeta)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sourceImage, err = params.GradientMap.Process(sourceImage, params, visionMeta)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	sourceImage, err = params.Stylize.Process(sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
