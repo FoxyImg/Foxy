@@ -31,7 +31,8 @@ type ImageParams struct {
 	MetaOnly    bool `json:"-"`
 	NeedsVision bool `json:"vision"`
 
-	Size *SizingOptions `json:"size,omitempty"`
+	Rotation *RotationParams `json:"rotation,omitempty"`
+	Size     *SizingOptions  `json:"size,omitempty"`
 
 	Background *BackgroundOptions `json:"background,omitempty"`
 
@@ -58,6 +59,7 @@ func NewImageParams() *ImageParams {
 	return &ImageParams{
 		Debug:       &DebugOptions{},
 		Background:  &BackgroundOptions{},
+		Rotation:    &RotationParams{},
 		Size:        &SizingOptions{},
 		Border:      &BorderOptions{},
 		Padding:     &PadOptions{},
@@ -81,6 +83,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 		if slices.Contains(result.Size.Params(), split[0]) {
 			nv := result.Size.ParseParams(split[0], split[1:])
 			result.NeedsVision = result.NeedsVision || nv
+		} else if slices.Contains(result.Rotation.Params(), split[0]) {
+			_ = result.Rotation.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Adjustments.Params(), split[0]) {
 			_ = result.Adjustments.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.GradientMap.Params(), split[0]) {
