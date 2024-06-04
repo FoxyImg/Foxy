@@ -19,10 +19,12 @@ type AdjustmentsParams struct {
 	Exposure   *float64  `json:"exposure,omitempty"`
 	Gamma      *float64  `json:"gamma,omitempty"`
 	Hue        *float64  `json:"hue,omitempty"`
+	Vibrance   *float64  `json:"vibrance,omitempty"`
+	Invert     *bool     `json:"invert,omitempty"`
 }
 
 func (*AdjustmentsParams) Params() []string {
-	return []string{"bri", "sat", "hue", "con", "exp", "gamma"}
+	return []string{"bri", "sat", "hue", "con", "exp", "gamma", "invert", "vib"}
 }
 
 func (opts *AdjustmentsParams) ParseParams(param string, options []string) (needsVision bool) {
@@ -74,6 +76,15 @@ func (opts *AdjustmentsParams) ParseParams(param string, options []string) (need
 		if err == nil {
 			opts.Gamma = utils.Ptr(b)
 		}
+	case "vib":
+		if len(options) != 1 {
+			return
+		}
+
+		b, err := strconv.ParseFloat(options[0], 64)
+		if err == nil {
+			opts.Vibrance = utils.Ptr(b / 100.0)
+		}
 	case "hue":
 		if len(options) != 1 {
 			return
@@ -83,6 +94,13 @@ func (opts *AdjustmentsParams) ParseParams(param string, options []string) (need
 		if err == nil {
 			opts.Hue = utils.Ptr(float64(b))
 		}
+	case "invert":
+		if len(options) != 1 {
+			return
+		}
+
+		b := options[0] == "true"
+		opts.Invert = &b
 	}
 
 	return
@@ -125,10 +143,6 @@ func (opts *AdjustmentsParams) Process(sourceImage *vips.ImageRef, params *Image
 			return sourceImage, err
 		}
 
-		//if gamma != 0 {
-		//	gamma = 1.0 / gamma
-		//}
-
 		err = sourceImage.Gamma(gamma)
 		if err != nil {
 			log.Println(err)
@@ -139,6 +153,31 @@ func (opts *AdjustmentsParams) Process(sourceImage *vips.ImageRef, params *Image
 		if err != nil {
 			return sourceImage, err
 		}
+	}
+
+	if utils.IfNil(opts.Invert, false) {
+		_ = sourceImage.Invert()
+	}
+
+	vib := utils.IfNil(opts.Vibrance, 0)
+	if vib > 0 {
+		currentCS := sourceImage.ColorSpace()
+		err := sourceImage.ToColorSpace(vips.InterpretationLCH)
+		if err != nil {
+			return sourceImage, err
+		}
+
+		err = sourceImage.Linear([]float64{1.0, 1.0 + vib, 1.0}, []float64{0.0, 0.0, 0.0})
+		if err != nil {
+			log.Println(err)
+			return sourceImage, err
+		}
+
+		err = sourceImage.ToColorSpace(currentCS)
+		if err != nil {
+			return sourceImage, err
+		}
+
 	}
 
 	return sourceImage, nil
