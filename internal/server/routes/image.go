@@ -56,6 +56,9 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for len(parts[2])%4 != 0 {
+		parts[2] += "="
+	}
 	source, err := base64.URLEncoding.DecodeString(parts[2])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
