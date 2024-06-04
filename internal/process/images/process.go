@@ -84,6 +84,11 @@ func ProcessImage(
 		return nil, nil, err
 	}
 
+	sourceImage, err = params.Watermark.Process(sourceImage, params, visionMeta)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	sourceImage, err = params.Padding.Process(sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err

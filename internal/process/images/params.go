@@ -44,15 +44,12 @@ type ImageParams struct {
 	GradientMap *GradientMapParams `json:"gradientMap,omitempty"`
 	Adjustments *AdjustmentsParams `json:"adjustments,omitempty"`
 
+	Watermark *WatermarkParams `json:"watermark,omitempty"`
+
 	Export *ExportOptions `json:"export,omitempty"`
 
-	Rotate *int  `json:"rotate,omitempty"`
-	FlipH  *bool `json:"flipH,omitempty"`
-	FlipV  *bool `json:"flipV,omitempty"`
-
-	Brightness *float64 `json:"brightness,omitempty"`
-	Saturation *float64 `json:"saturation,omitempty"`
-	Hue        *float64 `json:"hue,omitempty"`
+	FlipH *bool `json:"flipH,omitempty"`
+	FlipV *bool `json:"flipV,omitempty"`
 }
 
 func NewImageParams() *ImageParams {
@@ -65,6 +62,7 @@ func NewImageParams() *ImageParams {
 		Padding:     &PadOptions{},
 		Redact:      &RedactOptions{},
 		Stylize:     &StylizeParams{},
+		Watermark:   &WatermarkParams{},
 		GradientMap: &GradientMapParams{},
 		Adjustments: &AdjustmentsParams{},
 		Export: &ExportOptions{
@@ -105,6 +103,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			_ = result.Background.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Export.Params(), split[0]) {
 			_ = result.Export.ParseParams(split[0], split[1:])
+		} else if slices.Contains(result.Watermark.Params(), split[0]) {
+			_ = result.Watermark.ParseParams(split[0], split[1:])
 		} else if split[0] == "meta" {
 			result.MetaOnly = true
 			result.NeedsVision = true

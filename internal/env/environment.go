@@ -26,6 +26,8 @@ type FoxyEnv struct {
 	DefaultUserSourceConfig *string `env:"DEFAULT_USER_SOURCE_CONFIG_FILE"`
 
 	AllowPresetManagement bool `env:"ALLOW_PRESET_MANAGEMENT"`
+
+	FontConfigDir *string `env:"FONTCONFIG_DIR"`
 }
 
 var FoxyEnvironment = FoxyEnv{
