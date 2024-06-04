@@ -117,7 +117,7 @@ func (opts *GradientMapParams) Process(sourceImage *vips.ImageRef, params *Image
 			return sourceImage, err
 		}
 
-		_ = mappedImg.Linear([]float64{1.0, 1.0, 1.0, *opts.Opacity}, []float64{0.0, 0.0, 0.0, 0.0})
+		_ = mappedImg.Linear([]float64{1.0, 1.0, 1.0, 0}, []float64{0.0, 0.0, 0.0, 255.0 * *opts.Opacity})
 		_ = sourceImage.Composite(mappedImg, bm, 0, 0)
 	}
 

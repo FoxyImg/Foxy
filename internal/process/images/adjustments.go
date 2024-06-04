@@ -10,21 +10,23 @@ import (
 )
 
 type AdjustmentsParams struct {
-	Order      *[]string `json:"order,omitempty"`
-	Blur       *int      `json:"blur,omitempty"`
-	Pixelate   *int      `json:"pixelate,omitempty"`
-	Brightness *float64  `json:"brightness,omitempty"`
-	Saturation *float64  `json:"saturation,omitempty"`
-	Contrast   *float64  `json:"contrast,omitempty"`
-	Exposure   *float64  `json:"exposure,omitempty"`
-	Gamma      *float64  `json:"gamma,omitempty"`
-	Hue        *float64  `json:"hue,omitempty"`
-	Vibrance   *float64  `json:"vibrance,omitempty"`
-	Invert     *bool     `json:"invert,omitempty"`
+	Order          *[]string `json:"order,omitempty"`
+	Blur           *int      `json:"blur,omitempty"`
+	Pixelate       *int      `json:"pixelate,omitempty"`
+	Brightness     *float64  `json:"brightness,omitempty"`
+	Saturation     *float64  `json:"saturation,omitempty"`
+	Contrast       *float64  `json:"contrast,omitempty"`
+	Exposure       *float64  `json:"exposure,omitempty"`
+	Gamma          *float64  `json:"gamma,omitempty"`
+	Hue            *float64  `json:"hue,omitempty"`
+	Vibrance       *float64  `json:"vibrance,omitempty"`
+	Invert         *bool     `json:"invert,omitempty"`
+	Texture        *float64  `json:"texture,omitempty"`
+	TextureDensity *float64  `json:"textureDensity,omitempty"`
 }
 
 func (*AdjustmentsParams) Params() []string {
-	return []string{"bri", "sat", "hue", "con", "exp", "gamma", "invert", "vib"}
+	return []string{"bri", "sat", "hue", "con", "exp", "gamma", "invert", "vib", "texture"}
 }
 
 func (opts *AdjustmentsParams) ParseParams(param string, options []string) (needsVision bool) {
@@ -93,6 +95,23 @@ func (opts *AdjustmentsParams) ParseParams(param string, options []string) (need
 		b, err := strconv.Atoi(options[0])
 		if err == nil {
 			opts.Hue = utils.Ptr(float64(b))
+		}
+	case "texture":
+		if len(options) == 0 {
+			return
+		}
+
+		b, err := strconv.ParseFloat(options[0], 64)
+		if err == nil {
+			opts.Texture = &b
+		}
+
+		if len(options) == 2 {
+			density, err := strconv.ParseFloat(options[1], 64)
+			if err == nil {
+				density = math.Max(0.0, density/100.0)
+				opts.TextureDensity = &density
+			}
 		}
 	case "invert":
 		if len(options) != 1 {
@@ -178,6 +197,45 @@ func (opts *AdjustmentsParams) Process(sourceImage *vips.ImageRef, params *Image
 			return sourceImage, err
 		}
 
+	}
+
+	texture := utils.IfNil(opts.Texture, 0)
+	textureDensity := utils.IfNil(opts.TextureDensity, 1.0)
+	if texture > 0 && textureDensity > 0 {
+		blurred, err := sourceImage.Copy()
+		if err != nil {
+			return sourceImage, err
+		}
+		if !blurred.HasAlpha() {
+			_ = blurred.AddAlpha()
+		}
+
+		highpass, err := sourceImage.Copy()
+		if err != nil {
+			return sourceImage, err
+		}
+
+		_ = blurred.Invert()
+		_ = blurred.GaussianBlur(texture)
+		_ = blurred.Linear([]float64{1.0, 1.0, 1.0, 0}, []float64{0.0, 0.0, 0.0, 127.5})
+		_ = highpass.Composite(blurred, vips.BlendModeOver, 0, 0)
+
+		if textureDensity < 1.0 {
+			dest, err := sourceImage.Copy()
+			if err != nil {
+				return sourceImage, err
+			}
+
+			_ = dest.Composite(highpass, vips.BlendModeOverlay, 0, 0)
+
+			if !dest.HasAlpha() {
+				_ = dest.AddAlpha()
+			}
+			_ = dest.Linear([]float64{1.0, 1.0, 1.0, 0}, []float64{0.0, 0.0, 0.0, 255 * textureDensity})
+			_ = sourceImage.Composite(dest, vips.BlendModeOver, 0, 0)
+		} else {
+			_ = sourceImage.Composite(highpass, vips.BlendModeOverlay, 0, 0)
+		}
 	}
 
 	return sourceImage, nil
