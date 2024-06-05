@@ -2,6 +2,7 @@ package images
 
 import (
 	"fmt"
+	"foxy/internal/config"
 	"foxy/internal/geometry"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -76,7 +77,7 @@ func (opt *DebugOptions) ParseParams(param string, options []string) (needsVisio
 	return
 }
 
-func (opt *DebugOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opt *DebugOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if (opt.Faces || opt.AllFaces || opt.People || opt.AllPeople || opt.OtherLabels) && imageMeta != nil {
 		drawDebugBounds(imageMeta, params, sourceImage)
 	}

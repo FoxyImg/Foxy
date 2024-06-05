@@ -1,6 +1,7 @@
 package images
 
 import (
+	"foxy/internal/config"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -63,7 +64,7 @@ func (opts *StylizeParams) ParseParams(param string, options []string) (needsVis
 	return
 }
 
-func (opts *StylizeParams) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *StylizeParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	blur := utils.IfNil(opts.Blur, 0)
 	pixelate := utils.IfNil(opts.Pixelate, 0)
 

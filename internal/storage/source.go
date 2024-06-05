@@ -19,17 +19,17 @@ import (
 	"github.com/cyphar/filepath-securejoin"
 )
 
-func GetSourceImage(config *config.Config, sid string, key string, disableSourceCache bool) (*vips.ImageRef, error) {
+func GetSourceImage(config *config.Config, sourceId string, key string, disableSourceCache bool) (*vips.ImageRef, error) {
 	if config.Source.Type == "s3" {
 		url, err := aws.GetSignedUrl(*config, key, time.Hour*1)
 		if err != nil {
 			return nil, err
 		}
 
-		return GetCachedSourceFromUrl(sid, key, url, disableSourceCache)
+		return GetCachedSourceFromUrl(sourceId, key, url, disableSourceCache)
 	} else if config.Source.Type == "web" {
 		url := *config.Source.WebConfig.Url + "/" + key
-		return GetCachedSourceFromUrl(sid, key, url, disableSourceCache)
+		return GetCachedSourceFromUrl(sourceId, key, url, disableSourceCache)
 	} else if config.Source.Type == "local" {
 
 		filePath, err := securejoin.SecureJoin(*config.Source.LocalConfig.Path, "/"+key)
@@ -75,13 +75,13 @@ func GetSourceImageRef(sourceImageUrl string) (*vips.ImageRef, error) {
 	return sourceImage, nil
 }
 
-func GetCachedSourceFromUrl(sid string, key string, sourceImageUrl string, skipCache bool) (*vips.ImageRef, error) {
+func GetCachedSourceFromUrl(sourceId string, key string, sourceImageUrl string, skipCache bool) (*vips.ImageRef, error) {
 	if skipCache || !env.FoxyEnvironment.UseCache || env.FoxyEnvironment.CacheDir == nil {
 		log.Println("Cache is disabled")
 		return GetSourceImageRef(sourceImageUrl)
 	}
 
-	sourceFilePath := "/" + sid + "/" + strings.TrimLeft(key, "/")
+	sourceFilePath := "/" + sourceId + "/" + strings.TrimLeft(key, "/")
 	sourceFileName, err := securejoin.SecureJoin(strings.TrimRight(*env.FoxyEnvironment.CacheDir, "/"), sourceFilePath)
 	if err != nil {
 		return nil, err

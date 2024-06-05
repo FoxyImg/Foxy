@@ -1,6 +1,7 @@
 package images
 
 import (
+	"foxy/internal/config"
 	"foxy/internal/geometry"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
@@ -15,7 +16,7 @@ func (*PadOptions) Params() []string {
 	return []string{"pad"}
 }
 
-func (opt *PadOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opt *PadOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	l := utils.IfNil(opt.Left, 0)
 	t := utils.IfNil(opt.Top, 0)
 	r := utils.IfNil(opt.Right, 0)

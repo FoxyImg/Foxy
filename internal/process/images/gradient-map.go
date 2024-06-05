@@ -2,6 +2,7 @@ package images
 
 import (
 	"fmt"
+	"foxy/internal/config"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -84,7 +85,7 @@ func (opts *GradientMapParams) ParseParams(param string, options []string) (need
 	return
 }
 
-func (opts *GradientMapParams) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *GradientMapParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.Opacity != nil && *opts.Opacity > 0 && opts.Stops != nil && len(*opts.Stops) > 1 {
 		bm := utils.IfNil(opts.BlendMode, vips.BlendModeOver)
 

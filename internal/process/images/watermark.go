@@ -2,10 +2,14 @@ package images
 
 import (
 	"encoding/base64"
+	"foxy/internal/config"
+	"foxy/internal/geometry"
+	"foxy/internal/storage"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
+	"math"
 	"strconv"
 )
 
@@ -18,6 +22,7 @@ type WatermarkDropShadowParams struct {
 }
 
 type WatermarkParams struct {
+	ImageKey   *string                    `json:"imageKey,omitempty"`
 	Text       *string                    `json:"text,omitempty"`
 	Font       *string                    `json:"font,omitempty"`
 	VAlign     *string                    `json:"vAlign,omitempty"`
@@ -42,7 +47,7 @@ func (opts *WatermarkDropShadowParams) ParseDropShadowParams(options []string) {
 	}
 
 	switch options[0] {
-	case "opacity":
+	case "o":
 		if len(options) < 2 {
 			return
 		}
@@ -54,7 +59,7 @@ func (opts *WatermarkDropShadowParams) ParseDropShadowParams(options []string) {
 
 		w = w / 100.0
 		opts.Opacity = &w
-	case "blur":
+	case "bl":
 		if len(options) < 2 {
 			return
 		}
@@ -65,13 +70,13 @@ func (opts *WatermarkDropShadowParams) ParseDropShadowParams(options []string) {
 		}
 
 		opts.Blur = &w
-	case "color":
+	case "c":
 		if len(options) < 2 {
 			return
 		}
 
 		opts.Color = &options[1]
-	case "offs":
+	case "xy":
 		if len(options) == 2 {
 			x, err := strconv.Atoi(options[1])
 			if err != nil {
@@ -129,6 +134,21 @@ func (opts *WatermarkParams) ParseParams(param string, options []string) (needsV
 		}
 
 		opts.Text = utils.Ptr(string(text))
+	case "img":
+		if len(options) < 2 {
+			return
+		}
+
+		for len(options[1])%4 != 0 {
+			options[1] += "="
+		}
+
+		img, err := base64.URLEncoding.DecodeString(options[1])
+		if err != nil {
+			return
+		}
+
+		opts.ImageKey = utils.Ptr(string(img))
 	case "font":
 		if len(options) < 2 {
 			return
@@ -144,7 +164,7 @@ func (opts *WatermarkParams) ParseParams(param string, options []string) (needsV
 		}
 
 		opts.Font = utils.Ptr(string(font))
-	case "align":
+	case "al":
 		if len(options) == 2 {
 			opts.HAlign = &options[1]
 			opts.VAlign = &options[1]
@@ -152,7 +172,7 @@ func (opts *WatermarkParams) ParseParams(param string, options []string) (needsV
 			opts.HAlign = &options[1]
 			opts.VAlign = &options[2]
 		}
-	case "size":
+	case "dim":
 		if len(options) == 2 {
 			w, err := strconv.ParseFloat(options[1], 64)
 			if err != nil {
@@ -176,7 +196,7 @@ func (opts *WatermarkParams) ParseParams(param string, options []string) (needsV
 
 			opts.Height = &h
 		}
-	case "opacity":
+	case "o":
 		if len(options) == 2 {
 			w, err := strconv.ParseFloat(options[1], 64)
 			if err != nil {
@@ -186,7 +206,7 @@ func (opts *WatermarkParams) ParseParams(param string, options []string) (needsV
 			w = w / 100.0
 			opts.Opacity = &w
 		}
-	case "color":
+	case "c":
 		if len(options) == 2 {
 			opts.Color = &options[1]
 		}
@@ -227,7 +247,7 @@ func (opts *WatermarkParams) ParseParams(param string, options []string) (needsV
 
 			opts.VPadding = &v
 		}
-	case "shadow":
+	case "ds":
 		if opts.DropShadow == nil {
 			opts.DropShadow = &WatermarkDropShadowParams{}
 		}
@@ -301,7 +321,7 @@ func (opts *WatermarkParams) CreateWatermarkFillImage(offx int, offy int, color 
 	return watermarkColor, nil
 }
 
-func (opts *WatermarkParams) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *WatermarkParams) ProcessTextWatermark(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	log.Println("format?", sourceImage.BandFormat())
 
 	if opts.Text == nil || *opts.Text == "" || opts.Font == nil || opts.Width == nil || *opts.Width == 0 || opts.Height == nil || *opts.Height == 0 {
@@ -408,5 +428,67 @@ func (opts *WatermarkParams) Process(sourceImage *vips.ImageRef, params *ImagePa
 	}
 
 	return sourceImage, nil
+}
 
+func (opts *WatermarkParams) ProcessImageWatermark(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+	if opts.ImageKey == nil {
+		return sourceImage, nil
+	}
+
+	watermarkImg, err := storage.GetSourceImage(config, sourceId, *opts.ImageKey, params.Debug.DisableSourceCache)
+	if err != nil {
+		return sourceImage, err
+	}
+
+	vpadding := utils.Max(4, int(utils.IfNil(opts.VPadding, 10.0)))
+	hpadding := utils.Max(4, int(utils.IfNil(opts.HPadding, 10.0)))
+
+	targetWidth := int(math.Floor((*opts.Width / 100.0) * float64(sourceImage.Width())))
+	targetHeight := int(math.Floor((*opts.Height / 100.0) * float64(sourceImage.Height())))
+
+	newSize := geometry.SizeToFitSize(watermarkImg.Width(), watermarkImg.Height(), targetWidth, targetHeight)
+	_ = watermarkImg.Resize(float64(newSize.Width)/float64(watermarkImg.Width()), vips.KernelLanczos3)
+
+	if opts.Rotate != nil && *opts.Rotate != vips.Angle0 {
+		_ = watermarkImg.Rotate(*opts.Rotate)
+	}
+
+	x := hpadding
+	y := vpadding
+	if opts.HAlign != nil && *opts.HAlign == "center" {
+		x = (sourceImage.Width() - watermarkImg.Width()) / 2
+	} else if opts.HAlign != nil && *opts.HAlign == "right" {
+		x = sourceImage.Width() - watermarkImg.Width() - hpadding
+	}
+
+	if opts.VAlign != nil && *opts.VAlign == "center" {
+		y = (sourceImage.Height() - watermarkImg.Height()) / 2
+	} else if opts.VAlign != nil && *opts.VAlign == "bottom" {
+		y = sourceImage.Height() - watermarkImg.Height() - vpadding
+	}
+
+	if !sourceImage.HasAlpha() {
+		_ = sourceImage.AddAlpha()
+	}
+
+	if opts.Opacity != nil && *opts.Opacity > 0 {
+		_ = watermarkImg.Linear([]float64{1.0, 1.0, 1.0, *opts.Opacity}, []float64{0.0, 0.0, 0.0, 0.0})
+	}
+
+	err = sourceImage.Composite(watermarkImg, vips.BlendModeOver, x, y)
+	if err != nil {
+		log.Println("Composite Error:", err)
+	}
+
+	return sourceImage, nil
+}
+
+func (opts *WatermarkParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+	if opts.Text != nil && opts.Font != nil {
+		return opts.ProcessTextWatermark(sourceId, config, sourceImage, params, imageMeta)
+	} else if opts.ImageKey != nil {
+		return opts.ProcessImageWatermark(sourceId, config, sourceImage, params, imageMeta)
+	}
+
+	return sourceImage, nil
 }

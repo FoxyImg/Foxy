@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*Metadata, error) {
+func DetectFaces(sourceId string, sourceConfig *config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*Metadata, error) {
 	var metaFilePath *string = nil
 	var metaFileName *string = nil
 
@@ -54,7 +54,7 @@ func DetectFaces(sourceConfig config.Config, sid string, key string, sourceImage
 
 	var meta *Metadata
 	if sourceConfig.Vision.Type == "rekognition" {
-		m, err := RekognitionDetectFaces(sourceConfig, sid, key, sourceImage)
+		m, err := RekognitionDetectFaces(sourceId, sourceConfig, sid, key, sourceImage)
 		if err != nil {
 			return nil, err
 		}

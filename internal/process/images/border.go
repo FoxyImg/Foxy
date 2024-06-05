@@ -1,6 +1,7 @@
 package images
 
 import (
+	"foxy/internal/config"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -82,7 +83,7 @@ func (opt *BorderOptions) ParseParams(param string, options []string) (needsVisi
 	return
 }
 
-func (opt *BorderOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opt *BorderOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	l := utils.IfNil(opt.Left, 0)
 	t := utils.IfNil(opt.Top, 0)
 	r := utils.IfNil(opt.Right, 0)

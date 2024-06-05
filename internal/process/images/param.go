@@ -1,6 +1,7 @@
 package images
 
 import (
+	"foxy/internal/config"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 )
@@ -12,5 +13,5 @@ type Param interface {
 
 type ProcessingParam interface {
 	Param
-	Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error)
+	Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error)
 }

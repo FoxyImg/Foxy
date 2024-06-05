@@ -2,6 +2,7 @@ package images
 
 import (
 	"errors"
+	"foxy/internal/config"
 	"foxy/internal/geometry"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
@@ -226,7 +227,7 @@ func (sz *SizingOptions) ParseParams(param string, options []string) (needsVisio
 	return
 }
 
-func (sz *SizingOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (sz *SizingOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if sz.Width != nil || sz.Height != nil {
 		cW := sz.Width
 		cH := sz.Height

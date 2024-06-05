@@ -17,10 +17,10 @@ type sourceInfo struct {
 	SampleImages []string `json:"sampleImages"`
 }
 
-func RegisterSourceRoutes() {
-	http.Handle("OPTIONS /sources/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+func RegisterSourceRoutes(mux *http.ServeMux) {
+	mux.Handle("OPTIONS /sources/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
 
-	http.Handle("GET /sources/{appId}", middleware.VerifyAuth(
+	mux.Handle("GET /sources/{appId}", middleware.VerifyAuth(
 		middleware.CorsHeaders(
 			http.HandlerFunc(GetSourcesHandler),
 		),

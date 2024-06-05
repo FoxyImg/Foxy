@@ -15,27 +15,27 @@ import (
 	"sync"
 )
 
-func RegisterPresetRoutes() {
-	http.Handle("OPTIONS /presets/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
-	http.Handle("OPTIONS /presets/{appId}/{presetName}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+func RegisterPresetRoutes(mux *http.ServeMux) {
+	mux.Handle("OPTIONS /presets/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+	mux.Handle("OPTIONS /presets/{appId}/{presetName}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
 
-	http.Handle("GET /presets/{appId}", middleware.VerifyAuth(
+	mux.Handle("GET /presets/{appId}", middleware.VerifyAuth(
 		middleware.CorsHeaders(
 			http.HandlerFunc(GetPresetsHandler),
 		),
 	))
 
-	http.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
+	mux.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
 		middleware.CorsHeaders(
 			http.HandlerFunc(PostNewPresetHandler),
 		),
 	))
-	http.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
+	mux.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
 		middleware.CorsHeaders(
 			http.HandlerFunc(PutUpdatePresetHandler),
 		),
 	))
-	http.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
+	mux.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
 		middleware.CorsHeaders(
 			http.HandlerFunc(DeletePresetHandler),
 		),

@@ -1,6 +1,7 @@
 package images
 
 import (
+	"foxy/internal/config"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -125,7 +126,7 @@ func (opts *AdjustmentsParams) ParseParams(param string, options []string) (need
 	return
 }
 
-func (opts *AdjustmentsParams) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *AdjustmentsParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	b := utils.IfNil(opts.Brightness, 1)
 	s := utils.IfNil(opts.Saturation, 1)
 	h := utils.IfNil(opts.Hue, 0)

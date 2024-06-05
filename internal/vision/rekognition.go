@@ -15,7 +15,7 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func RekognitionDetectFaces(sourceConfig config.Config, sid string, key string, sourceImage *vips.ImageRef) (*Metadata, error) {
+func RekognitionDetectFaces(sourceId string, sourceConfig *config.Config, sid string, key string, sourceImage *vips.ImageRef) (*Metadata, error) {
 	var rekConfig config.S3Config
 	if sourceConfig.Vision.UseSourceCredentials {
 		rekConfig = sourceConfig.Source.S3Config

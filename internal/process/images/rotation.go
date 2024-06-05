@@ -2,6 +2,7 @@ package images
 
 import "C"
 import (
+	"foxy/internal/config"
 	"foxy/internal/geometry"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
@@ -49,7 +50,7 @@ func (opts *RotationParams) ParseParams(param string, options []string) (needsVi
 	return
 }
 
-func (opts *RotationParams) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *RotationParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.Rotation == nil {
 		return sourceImage, nil
 	}

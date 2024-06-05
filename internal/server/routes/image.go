@@ -16,9 +16,9 @@ import (
 	"time"
 )
 
-func RegisterImageRoutes() {
-	http.HandleFunc("GET /{accessKey}/{source}/{params...}", GetImageHandler)
-	http.HandleFunc("GET /{accessKey}/{source}", GetImageHandler)
+func RegisterImageRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /{accessKey}/{source}/{params...}", GetImageHandler)
+	mux.HandleFunc("GET /{accessKey}/{source}", GetImageHandler)
 }
 
 func sendImageResult(w http.ResponseWriter, format string, buffer *[]byte) {
@@ -48,9 +48,9 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessKey := parts[1]
+	sourceId := parts[1]
 
-	sourceConfig, err := config.GetSourceConfigFromCache(accessKey)
+	sourceConfig, err := config.GetSourceConfigFromCache(sourceId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -120,14 +120,14 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !params.Debug.DisableRenderCache {
-		cached, _ := storage.GetCachedResult(accessKey, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"))
+		cached, _ := storage.GetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"))
 		if cached != nil {
 			sendImageResult(w, utils.IfNil(params.Export.Format, "jpg"), cached)
 			return
 		}
 	}
 
-	img, err := storage.GetSourceImage(sourceConfig, accessKey, string(source), params.Debug.DisableSourceCache)
+	img, err := storage.GetSourceImage(sourceConfig, sourceId, string(source), params.Debug.DisableSourceCache)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
@@ -139,7 +139,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buffer, meta, err := images.ProcessImage(*sourceConfig, accessKey, string(source), params, img)
+	buffer, meta, err := images.ProcessImage(sourceId, sourceConfig, sourceId, string(source), params, img)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
@@ -159,7 +159,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = storage.SetCachedResult(accessKey, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"), buffer)
+	_ = storage.SetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"), buffer)
 
 	sendImageResult(w, utils.IfNil(params.Export.Format, "jpg"), buffer)
 }

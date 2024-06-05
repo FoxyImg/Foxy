@@ -10,7 +10,8 @@ import (
 )
 
 func ProcessImage(
-	sourceConfig config.Config,
+	sourceId string,
+	sourceConfig *config.Config,
 	sid string,
 	key string,
 	params *ImageParams,
@@ -38,7 +39,7 @@ func ProcessImage(
 
 	var visionMeta *vision.Metadata
 	if params.NeedsVision && sourceConfig.Vision.Enabled {
-		foundMeta, err := vision.DetectFaces(sourceConfig, sid, key, sourceImage, params.Debug.DisableMetaCache)
+		foundMeta, err := vision.DetectFaces(sourceId, sourceConfig, sid, key, sourceImage, params.Debug.DisableMetaCache)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -52,49 +53,49 @@ func ProcessImage(
 
 	var err error
 
-	sourceImage, err = params.Redact.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Redact.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	_, _ = params.Debug.Process(sourceImage, params, visionMeta)
+	_, _ = params.Debug.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 
-	sourceImage, err = params.Size.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Size.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sourceImage, err = params.Rotation.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Rotation.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sourceImage, err = params.Adjustments.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Adjustments.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sourceImage, err = params.GradientMap.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.GradientMap.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sourceImage, err = params.Stylize.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Stylize.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sourceImage, err = params.Watermark.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Watermark.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sourceImage, err = params.Padding.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Padding.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sourceImage, err = params.Border.Process(sourceImage, params, visionMeta)
+	sourceImage, err = params.Border.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 	if err != nil {
 		return nil, nil, err
 	}

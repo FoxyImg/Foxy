@@ -2,6 +2,7 @@ package images
 
 import (
 	"fmt"
+	"foxy/internal/config"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -153,7 +154,7 @@ func (redact *RedactOptions) ParseParams(param string, options []string) (needsV
 	return
 }
 
-func (redact *RedactOptions) Process(sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (redact *RedactOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if utils.IfNil(redact.Blur, 0) == 0 && utils.IfNil(redact.Pixelate, 0) == 0 && utils.IfNil(redact.UseColor, false) == false {
 		return sourceImage, nil
 	}

@@ -7,14 +7,21 @@ import (
 )
 
 func StartServer() {
+	mux := http.NewServeMux()
+
 	if env.FoxyEnvironment.AllowPresetManagement {
-		routes.RegisterSourceRoutes()
-		routes.RegisterPresetRoutes()
+		routes.RegisterSourceRoutes(mux)
+		routes.RegisterPresetRoutes(mux)
 	}
 
-	routes.RegisterImageRoutes()
+	routes.RegisterImageRoutes(mux)
 
-	err := http.ListenAndServe(":"+env.FoxyEnvironment.Port, nil)
+	server := &http.Server{
+		Addr:    ":" + env.FoxyEnvironment.Port,
+		Handler: mux,
+	}
+
+	err := server.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}
