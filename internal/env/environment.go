@@ -1,8 +1,9 @@
 package env
 
 type FoxyEnv struct {
-	DatabaseUrl string `env:"DB_URL"`
-	RedisUrl    string `env:"REDIS_URL"`
+	ServerType  string  `env:"SERVER_TYPE"`
+	DatabaseUrl *string `env:"DB_URL"`
+	RedisUrl    *string `env:"REDIS_URL"`
 
 	Port string `env:"PORT"`
 
@@ -31,6 +32,7 @@ type FoxyEnv struct {
 }
 
 var FoxyEnvironment = FoxyEnv{
+	ServerType:            "primary",
 	Port:                  "8080",
 	UseCache:              false,
 	UseRenderCache:        false,

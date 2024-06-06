@@ -8,8 +8,12 @@ import (
 )
 
 func GetRedisClient() *redis.Client {
+	if env.FoxyEnvironment.RedisUrl == nil {
+		return nil
+	}
+
 	return redis.NewClient(&redis.Options{
-		Addr:     env.FoxyEnvironment.RedisUrl,
+		Addr:     *env.FoxyEnvironment.RedisUrl,
 		Password: "",
 		DB:       0, // use default DB
 	})
@@ -17,6 +21,10 @@ func GetRedisClient() *redis.Client {
 
 func RedisGet(key string) (*string, error) {
 	client := GetRedisClient()
+	if client == nil {
+		return nil, nil
+	}
+
 	//noinspection GoUnhandledErrorResult
 	defer client.Close()
 
@@ -32,6 +40,10 @@ func RedisGet(key string) (*string, error) {
 
 func RedisSet(key string, val interface{}, expiration time.Duration) error {
 	client := GetRedisClient()
+	if client == nil {
+		return nil
+	}
+
 	//noinspection GoUnhandledErrorResult
 	defer client.Close()
 
@@ -40,6 +52,10 @@ func RedisSet(key string, val interface{}, expiration time.Duration) error {
 
 func RedisDelete(key string) error {
 	client := GetRedisClient()
+	if client == nil {
+		return nil
+	}
+
 	//noinspection GoUnhandledErrorResult
 	defer client.Close()
 

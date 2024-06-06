@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"foxy/internal/env"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -9,11 +10,15 @@ import (
 var dbpool *pgxpool.Pool
 
 func NewClient() (*pgxpool.Pool, error) {
+	if env.FoxyEnvironment.DatabaseUrl == nil {
+		return nil, errors.New("no database url set")
+	}
+
 	if dbpool != nil {
 		return dbpool, nil
 	}
 
-	poolConfig, err := pgxpool.ParseConfig(env.FoxyEnvironment.DatabaseUrl)
+	poolConfig, err := pgxpool.ParseConfig(*env.FoxyEnvironment.DatabaseUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -40,4 +45,8 @@ func NewConnection() (*pgxpool.Conn, error) {
 	}
 
 	return conn, nil
+}
+
+func Boot() error {
+	return RunMigrations()
 }
