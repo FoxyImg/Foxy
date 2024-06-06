@@ -1,0 +1,49 @@
+{
+  "s3": {
+    "secret": "secret",
+    "source": {
+      "type": "s3",
+      "key": "key",
+      "bucket": "bucket",
+      "region": "us-east-1",
+      "secret": "secret"
+    },
+    "vision": {
+      "type": "rekognition",
+      "enabled": true,
+      "useSourceCredentials": true
+    }
+  },
+  "local": {
+    "secret": "secret",
+    "source": {
+      "path": "/Volumes/Projects/Archive/Images",
+      "type": "local"
+    },
+    "vision": {
+      "type": "rekognition",
+      "key": "key",
+      "bucket": "bucket",
+      "region": "us-east-1",
+      "secret": "secret",
+      "enabled": true,
+      "useSourceCredentials": false
+    }
+  },
+  "web": {
+    "secret": "secret",
+    "source": {
+      "url": "http://localhost:8081",
+      "type": "web"
+    },
+    "vision": {
+      "type": "rekognition",
+      "key": "key",
+      "bucket": "bucket",
+      "region": "us-east-1",
+      "secret": "secret",
+      "enabled": true,
+      "useSourceCredentials": false
+    }
+  }
+}

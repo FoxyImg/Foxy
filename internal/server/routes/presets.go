@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"foxy/internal/db"
-	"foxy/internal/process/images"
+	"foxy/internal/env"
+	"foxy/internal/params"
 	"foxy/internal/server/middleware"
 	"github.com/gosimple/slug"
 	"github.com/jackc/pgx/v5"
@@ -25,24 +26,39 @@ func RegisterPresetRoutes(mux *http.ServeMux) {
 		),
 	))
 
-	mux.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
-		middleware.CorsHeaders(
-			http.HandlerFunc(PostNewPresetHandler),
-		),
-	))
-	mux.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
-		middleware.CorsHeaders(
-			http.HandlerFunc(PutUpdatePresetHandler),
-		),
-	))
-	mux.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
-		middleware.CorsHeaders(
-			http.HandlerFunc(DeletePresetHandler),
-		),
-	))
+	if !env.FoxyEnvironment.Isolated {
+		mux.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
+			middleware.CorsHeaders(
+				http.HandlerFunc(PostNewPresetHandler),
+			),
+		))
+		mux.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
+			middleware.CorsHeaders(
+				http.HandlerFunc(PutUpdatePresetHandler),
+			),
+		))
+		mux.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
+			middleware.CorsHeaders(
+				http.HandlerFunc(DeletePresetHandler),
+			),
+		))
+	}
 }
 
 func GetPresetsHandler(w http.ResponseWriter, r *http.Request) {
+	if env.FoxyEnvironment.Isolated {
+		presetsJSON, presetsJSONError := json.Marshal(params.PresetCache)
+		if presetsJSONError != nil {
+			log.Println("Marshal JSON Error:", presetsJSONError)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(presetsJSON)
+		return
+	}
+
 	conn, err := db.NewConnection()
 	if err != nil {
 		log.Println("New Connection Error:", err)
@@ -62,11 +78,11 @@ func GetPresetsHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer res.Close()
 
-	var presets = make(map[string]images.ImageParams)
+	var presets = make(map[string]params.ImageParams)
 	var name string
 	var presetJSON string
 	_, err = pgx.ForEachRow(res, []any{&name, &presetJSON}, func() error {
-		var params = *images.NewImageParams()
+		var params = *params.NewImageParams()
 		jsonErr := json.Unmarshal([]byte(presetJSON), &params)
 		if jsonErr != nil {
 			return jsonErr
@@ -126,7 +142,7 @@ func PostNewPresetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _, err = images.FetchPreset(appId, presetName)
+	_, _, err = params.FetchPreset(&appId, presetName)
 	if err != nil {
 		log.Println("Fetch Preset Error:", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -161,7 +177,7 @@ func PutUpdatePresetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _, err = images.FetchPreset(appId, presetName)
+	_, _, err = params.FetchPreset(&appId, presetName)
 	if err != nil {
 		log.Println("Fetch Preset Error:", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -177,12 +193,12 @@ func PutUpdatePresetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
-	delete(images.PresetCache, appId+":"+presetName)
+	delete(params.PresetCache, appId+":"+presetName)
 	mutex.Unlock()
 
 	_ = db.RedisDelete(appId + ":" + presetName)
 
-	_, _, err = images.FetchPreset(appId, presetName)
+	_, _, err = params.FetchPreset(&appId, presetName)
 	if err != nil {
 		log.Println("Fetch Preset Error:", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -214,7 +230,7 @@ func DeletePresetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
-	delete(images.PresetCache, appId+":"+presetName)
+	delete(params.PresetCache, appId+":"+presetName)
 	mutex.Unlock()
 
 	_ = db.RedisDelete(appId + ":" + presetName)

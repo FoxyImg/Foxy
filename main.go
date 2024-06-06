@@ -3,6 +3,7 @@ package main
 import (
 	"foxy/internal/db"
 	"foxy/internal/env"
+	"foxy/internal/params"
 	"foxy/internal/server"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
@@ -15,7 +16,12 @@ func main() {
 	env.Boot()
 	err := db.Boot()
 	if err != nil {
-		log.Panic("Error booting db", err)
+		log.Panic("Error booting db: ", err)
+	}
+
+	err = params.Boot()
+	if err != nil {
+		log.Panic("Error booting params: ", err)
 	}
 
 	server.StartServer()

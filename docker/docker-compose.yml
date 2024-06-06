@@ -30,3 +30,4 @@ services:
       - 8081:80
     volumes:
       - /Volumes/Projects/Archive/Images:/static
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf

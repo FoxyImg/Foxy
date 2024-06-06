@@ -1,0 +1,31 @@
+{
+  "redact_test": {
+    "version": 1,
+    "params": {
+      "vision": true,
+      "size": {
+        "crop": [
+          "face"
+        ],
+        "width": 850,
+        "height": 850
+      },
+      "redact": {
+        "faces": [
+          -1
+        ],
+        "blur": 18,
+        "blurMask": 9,
+        "expandMask": 25,
+        "pixelate": 18
+      },
+      "export": {
+        "format": "webp",
+        "quality": 85,
+        "reductionEffort": null,
+        "lossless": null,
+        "nearLossless": null
+      }
+    }
+  }
+}

@@ -8,3 +8,4 @@ cache
 .idea
 __debug_bin*
 /_configs/
+/source.config.json

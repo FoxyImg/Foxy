@@ -8,6 +8,7 @@ require (
 	github.com/davidbyttow/govips/v2 v2.14.0
 	github.com/gosimple/slug v1.14.0
 	github.com/jackc/pgx/v5 v5.5.5
+	github.com/jinzhu/copier v0.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.5.1
 )

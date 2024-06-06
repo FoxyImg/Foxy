@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"foxy/internal/db"
+	"foxy/internal/env"
 	"log"
 	"net/http"
 	"strings"
@@ -11,6 +12,11 @@ import (
 
 func VerifyAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if env.FoxyEnvironment.Isolated {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		log.Println("Verify auth middleware", r.Method, r.URL.Path)
 		appId := r.PathValue("appId")
 		if appId == "" {

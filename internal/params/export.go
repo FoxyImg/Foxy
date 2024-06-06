@@ -1,4 +1,4 @@
-package images
+package params
 
 import (
 	"foxy/internal/utils"

@@ -1,9 +1,14 @@
 package env
 
 type FoxyEnv struct {
+	Isolated bool
+
 	ServerType  string  `env:"SERVER_TYPE"`
 	DatabaseUrl *string `env:"DB_URL"`
 	RedisUrl    *string `env:"REDIS_URL"`
+
+	SourceConfigFile *string `env:"SOURCE_CONFIG"`
+	PresetsFile      *string `env:"PRESETS"`
 
 	Port string `env:"PORT"`
 
@@ -19,16 +24,7 @@ type FoxyEnv struct {
 
 	RequireSignatureValidation bool `env:"REQUIRE_SIG_VALIDATION"`
 
-	DefaultUserName         *string `env:"DEFAULT_USER_NAME"`
-	DefaultUserPassword     *string `env:"DEFAULT_USER_PASSWORD"`
-	DefaultUserEmail        *string `env:"DEFAULT_USER_EMAIL"`
-	DefaultUserKey          *string `env:"DEFAULT_USER_KEY"`
-	DefaultUserSecret       *string `env:"DEFAULT_USER_SECRET"`
-	DefaultUserSourceConfig *string `env:"DEFAULT_USER_SOURCE_CONFIG_FILE"`
-
 	AllowPresetManagement bool `env:"ALLOW_PRESET_MANAGEMENT"`
-
-	FontConfigDir *string `env:"FONTCONFIG_DIR"`
 }
 
 var FoxyEnvironment = FoxyEnv{
@@ -43,4 +39,8 @@ var FoxyEnvironment = FoxyEnv{
 
 func Boot() {
 	LoadEnvironment(&FoxyEnvironment)
+	FoxyEnvironment.Isolated = FoxyEnvironment.SourceConfigFile != nil
+	if FoxyEnvironment.Isolated {
+		FoxyEnvironment.DatabaseUrl = nil
+	}
 }

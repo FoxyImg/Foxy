@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"foxy/internal/config"
 	"foxy/internal/env"
-	"foxy/internal/process/images"
+	"foxy/internal/params"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
 	"log"
@@ -66,28 +66,28 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var checkSig = true
-	var params *images.ImageParams
+	var imageParams *params.ImageParams
 
 	if len(parts) >= 4 && strings.HasPrefix(parts[3], "@") {
-		p, version, paramsErr := images.FetchPreset(*sourceConfig.AppId, parts[3][1:])
+		p, version, paramsErr := params.FetchPreset(sourceConfig.AppId, parts[3][1:])
 		if paramsErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		checkSig = false
-		params = p
+		imageParams = p
 		parts = append(parts, "version:"+strconv.Itoa(version))
 	}
 
-	if params == nil {
-		p, paramsErr := images.BuildParams(parts[3:])
+	if imageParams == nil {
+		p, paramsErr := params.BuildParams(parts[3:])
 		if paramsErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		params = p
+		imageParams = p
 	}
 
 	if checkSig && env.FoxyEnvironment.RequireSignatureValidation {
@@ -108,7 +108,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.URL.Query().Has("preset") {
-		paramsJSON, jsonErr := json.Marshal(params)
+		paramsJSON, jsonErr := json.Marshal(imageParams)
 		if jsonErr != nil {
 			fmt.Println("Marshal JSON Error: ", jsonErr)
 			return
@@ -119,15 +119,15 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !params.Debug.DisableRenderCache {
-		cached, _ := storage.GetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"))
+	if imageParams.Debug != nil && !imageParams.Debug.DisableRenderCache {
+		cached, _ := storage.GetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(imageParams.Export.Format, "jpg"))
 		if cached != nil {
-			sendImageResult(w, utils.IfNil(params.Export.Format, "jpg"), cached)
+			sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), cached)
 			return
 		}
 	}
 
-	img, err := storage.GetSourceImage(sourceConfig, sourceId, string(source), params.Debug.DisableSourceCache)
+	img, err := storage.GetSourceImage(sourceConfig, sourceId, string(source), imageParams.Debug != nil && imageParams.Debug.DisableSourceCache)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
@@ -139,14 +139,14 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buffer, meta, err := images.ProcessImage(sourceId, sourceConfig, sourceId, string(source), params, img)
+	buffer, meta, err := params.ProcessImage(sourceId, sourceConfig, sourceId, string(source), imageParams, img)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
 
-	if params.MetaOnly {
+	if imageParams.MetaOnly {
 		metaJSON, err := json.Marshal(meta)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -159,7 +159,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = storage.SetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(params.Export.Format, "jpg"), buffer)
+	_ = storage.SetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 
-	sendImageResult(w, utils.IfNil(params.Export.Format, "jpg"), buffer)
+	sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 }

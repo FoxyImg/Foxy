@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"foxy/internal/db"
+	"foxy/internal/env"
 	"log"
+	"os"
+	"sync"
 	"time"
 )
 
@@ -44,7 +47,48 @@ type Config struct {
 	Vision *VisionConfig `json:"vision"`
 }
 
+var LoadedSources *map[string]*Config = nil
+
+func LoadSourceConfigFromJSON() error {
+	if LoadedSources != nil {
+		return nil
+	}
+
+	jsonData, err := os.ReadFile(*env.FoxyEnvironment.SourceConfigFile)
+	if err != nil {
+		log.Println("Read File Error:", err)
+		return err
+	}
+
+	sources := make(map[string]*Config)
+	err = json.Unmarshal(jsonData, &sources)
+	if err != nil {
+		log.Println("Unmarshal Error:", err)
+		return err
+	}
+
+	m := &sync.Mutex{}
+	m.Lock()
+	LoadedSources = &sources
+	m.Unlock()
+
+	return nil
+}
+
 func GetSourceConfig(sid string) (*Config, error) {
+	if env.FoxyEnvironment.Isolated {
+		if LoadedSources == nil {
+			err := LoadSourceConfigFromJSON()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		sourceConfig := (*LoadedSources)[sid]
+
+		return sourceConfig, nil
+	}
+
 	redisConfigJSON, err := db.RedisGet("config:" + sid)
 	if err != nil {
 		log.Println("RedisGet Error:", err)
@@ -58,7 +102,7 @@ func GetSourceConfig(sid string) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if env.FoxyEnvironment.DatabaseUrl != nil {
 		pg, pgErr := db.NewClient()
 		if pgErr != nil {
 			return nil, pgErr
@@ -100,6 +144,8 @@ func GetSourceConfig(sid string) (*Config, error) {
 		if err != nil {
 			log.Println("RedisSet Error:", err)
 		}
+	} else {
+		return nil, nil
 	}
 
 	return &result, nil
