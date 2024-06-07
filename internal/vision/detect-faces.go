@@ -60,6 +60,13 @@ func DetectFaces(sourceId string, sourceConfig *config.Config, sid string, key s
 		}
 
 		meta = m
+	} else if sourceConfig.Vision.Type == "compreface" {
+		m, err := CompreFaceDetectFaces(sourceId, sourceConfig, sid, key, sourceImage)
+		if err != nil {
+			return nil, err
+		}
+
+		meta = m
 	} else {
 		return nil, nil
 	}

@@ -1,6 +1,7 @@
 package params
 
 import (
+	"errors"
 	"foxy/internal/config"
 	"foxy/internal/env"
 	"foxy/internal/utils"
@@ -42,6 +43,10 @@ func ProcessImage(
 		foundMeta, err := vision.DetectFaces(sourceId, sourceConfig, sid, key, sourceImage, params.Debug != nil && params.Debug.DisableMetaCache)
 		if err != nil {
 			return nil, nil, err
+		}
+
+		if foundMeta == nil {
+			return nil, nil, errors.New("meta is nil?")
 		}
 
 		visionMeta = foundMeta

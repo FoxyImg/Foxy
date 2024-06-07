@@ -33,11 +33,17 @@ type SourceConfig struct {
 	LocalConfig
 }
 
+type CompreFaceConfig struct {
+	ApiKey *string `json:"apiKey"`
+	Url    *string `json:"url"`
+}
+
 type VisionConfig struct {
 	Enabled              bool   `json:"enabled"`
 	Type                 string `json:"type"`
 	UseSourceCredentials bool   `json:"useSourceCredentials"`
 	S3Config
+	CompreFaceConfig
 }
 
 type Config struct {
