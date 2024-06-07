@@ -45,17 +45,33 @@ func ProcessImage(
 		}
 
 		visionMeta = foundMeta
+		visionMeta.Width = sourceImage.Width()
+		visionMeta.Height = sourceImage.Height()
 
 		if params.MetaOnly {
 			return nil, visionMeta, nil
+		}
+	} else {
+		visionMeta = &vision.Metadata{
+			Width:  sourceImage.Width(),
+			Height: sourceImage.Height(),
 		}
 	}
 
 	var err error
 
-	sourceImage, err = params.Redact.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
-	if err != nil {
-		return nil, nil, err
+	if params.SourceCrop != nil {
+		sourceImage, err = params.SourceCrop.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if params.Redact != nil {
+		sourceImage, err = params.Redact.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if params.Debug != nil {

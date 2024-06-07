@@ -216,11 +216,11 @@ func (sz *SizingOptions) ParseParams(param string, options []string) (needsVisio
 		sz.Interesting = &interesting
 	case "gravity":
 		if len(options) == 1 {
-			sz.HGravity = &options[1]
-			sz.VGravity = &options[1]
+			sz.HGravity = &options[0]
+			sz.VGravity = &options[0]
 		} else if len(options) == 2 {
-			sz.HGravity = &options[1]
-			sz.VGravity = &options[2]
+			sz.HGravity = &options[0]
+			sz.VGravity = &options[1]
 		}
 	}
 

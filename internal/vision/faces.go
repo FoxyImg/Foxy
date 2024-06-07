@@ -53,10 +53,90 @@ type Label struct {
 }
 
 type Metadata struct {
+	Width            int     `json:"width"`
+	Height           int     `json:"height"`
 	Faces            []Face  `json:"faces"`
 	Labels           []Label `json:"labels"`
 	People           []Label `json:"people"`
 	ModerationLabels []Label `json:"moderationLabels"`
+}
+
+func cropLabels(labels []Label, sw, sh, x, y, width, height float64) []Label {
+	px := sw * x
+	py := sh * y
+	pw := sw * width
+	ph := sh * height
+
+	newLabels := []Label{}
+	for _, label := range labels {
+		if label.Box == nil {
+			newLabels = append(newLabels, label)
+			continue
+		}
+
+		fx := label.Box.Left * sw
+		fy := label.Box.Top * sh
+		fw := label.Box.Width * sw
+		fh := label.Box.Height * sh
+
+		label.Box.Left = (fx - px) / pw
+		label.Box.Top = (fy - py) / ph
+		label.Box.Width = fw / pw
+		label.Box.Height = fh / ph
+
+		if label.Box.Left+label.Box.Width < 0 {
+			continue
+		} else if label.Box.Left > 1.0 {
+			continue
+		} else if label.Box.Top+label.Box.Height < 0 {
+			continue
+		} else if label.Box.Top > 1.0 {
+			continue
+		}
+
+		newLabels = append(newLabels, label)
+	}
+
+	return newLabels
+}
+
+func (params *Metadata) SourceCrop(sw, sh, x, y, width, height float64) error {
+	px := sw * x
+	py := sh * y
+	pw := sw * width
+	ph := sh * height
+
+	newFaces := []Face{}
+	for _, face := range params.Faces {
+		fx := face.Box.Left * sw
+		fy := face.Box.Top * sh
+		fw := face.Box.Width * sw
+		fh := face.Box.Height * sh
+
+		face.Box.Left = (fx - px) / pw
+		face.Box.Top = (fy - py) / ph
+		face.Box.Width = fw / pw
+		face.Box.Height = fh / ph
+
+		if face.Box.Left+face.Box.Width < 0 {
+			continue
+		} else if face.Box.Left > 1.0 {
+			continue
+		} else if face.Box.Top+face.Box.Height < 0 {
+			continue
+		} else if face.Box.Top > 1.0 {
+			continue
+		}
+
+		newFaces = append(newFaces, face)
+	}
+	params.Faces = newFaces
+
+	params.Labels = cropLabels(params.Labels, sw, sh, x, y, width, height)
+	params.People = cropLabels(params.People, sw, sh, x, y, width, height)
+	params.ModerationLabels = cropLabels(params.ModerationLabels, sw, sh, x, y, width, height)
+
+	return nil
 }
 
 func CalcFacesBounds(faces []Face) geometry.Box {
