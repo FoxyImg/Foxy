@@ -12,11 +12,6 @@ import (
 
 func VerifyAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if env.FoxyEnvironment.Isolated {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		log.Println("Verify auth middleware", r.Method, r.URL.Path)
 		appId := r.PathValue("appId")
 		if appId == "" {
@@ -36,7 +31,17 @@ func VerifyAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		verifiedSecret, err := db.RedisGet(appId + ":key")
+		if env.FoxyEnvironment.Isolated {
+			if key != *env.FoxyEnvironment.APIKey {
+				http.Error(w, "Not Authorized", http.StatusUnauthorized)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		verifiedSecret, err := db.RedisGet(appId + ":api-key")
 		if err == nil && verifiedSecret != nil {
 			if key != *verifiedSecret {
 				http.Error(w, "Not Authorized", http.StatusUnauthorized)
@@ -53,7 +58,7 @@ func VerifyAuth(next http.Handler) http.Handler {
 		defer conn.Release()
 
 		var existingKey string
-		res := conn.QueryRow(context.Background(), "SELECT key FROM apps where id = $1", appId)
+		res := conn.QueryRow(context.Background(), "SELECT admin_key FROM apps where id = $1", appId)
 		_ = res.Scan(&existingKey)
 
 		if existingKey != key {
@@ -61,7 +66,7 @@ func VerifyAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		_ = db.RedisSet(appId+":key", key, time.Hour*24)
+		_ = db.RedisSet(appId+":api-key", key, time.Hour*24)
 
 		next.ServeHTTP(w, r)
 	})

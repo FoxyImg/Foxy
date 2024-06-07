@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 )
@@ -26,17 +27,41 @@ func RegisterPresetRoutes(mux *http.ServeMux) {
 		),
 	))
 
-	if !env.FoxyEnvironment.Isolated {
+	if !env.FoxyEnvironment.AllowPresetManagement {
+		return
+	}
+
+	if env.FoxyEnvironment.Isolated {
+		mux.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
+			middleware.CorsHeaders(
+				http.HandlerFunc(PostNewIsolatedPresetHandler),
+			),
+		))
+
+		mux.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
+			middleware.CorsHeaders(
+				http.HandlerFunc(PostNewIsolatedPresetHandler),
+			),
+		))
+
+		mux.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
+			middleware.CorsHeaders(
+				http.HandlerFunc(DeleteIsolatedPresetHandler),
+			),
+		))
+	} else {
 		mux.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
 			middleware.CorsHeaders(
 				http.HandlerFunc(PostNewPresetHandler),
 			),
 		))
+
 		mux.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
 			middleware.CorsHeaders(
 				http.HandlerFunc(PutUpdatePresetHandler),
 			),
 		))
+
 		mux.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
 			middleware.CorsHeaders(
 				http.HandlerFunc(DeletePresetHandler),
@@ -235,4 +260,98 @@ func DeletePresetHandler(w http.ResponseWriter, r *http.Request) {
 
 	_ = db.RedisDelete(appId + ":" + presetName)
 
+}
+
+func PostNewIsolatedPresetHandler(w http.ResponseWriter, r *http.Request) {
+	presetName := slug.Make(strings.ToLower(r.PathValue("presetName")))
+	presetJSON, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println("Read Body Error:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	log.Println("Preset JSON:", presetJSON)
+
+	if !json.Valid(presetJSON) {
+		log.Println("Invalid JSON")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var newIsolatedParams params.ImageParams
+	err = json.Unmarshal([]byte(presetJSON), &newIsolatedParams)
+	if err != nil {
+		log.Println("Invalid JSON: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if newIsolatedParams.SourceCrop != nil {
+		newIsolatedParams.SourceCrop = nil
+	}
+
+	m := &sync.Mutex{}
+	m.Lock()
+	params.IsolatedPresets[presetName] = &params.Preset{
+		Version: 1,
+		Params:  newIsolatedParams,
+	}
+	m.Unlock()
+
+	if env.FoxyEnvironment.PresetsFile != nil {
+		jsonStr, err := json.MarshalIndent(&params.IsolatedPresets, "", "  ")
+		if err != nil {
+			log.Println("Error marshaling presets file: ", err)
+		}
+
+		err = os.WriteFile(*env.FoxyEnvironment.PresetsFile, jsonStr, 0644)
+		if err != nil {
+			log.Println("Error writing presets file: ", err)
+		}
+	}
+
+	newParams := *params.NewImageParams()
+	err = json.Unmarshal([]byte(presetJSON), &newParams)
+	if err != nil {
+		log.Println("Invalid JSON: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if newParams.SourceCrop != nil {
+		newParams.SourceCrop = nil
+	}
+
+	m.Lock()
+	params.PresetCache[presetName] = &params.Preset{
+		Version: 1,
+		Params:  newParams,
+	}
+	m.Unlock()
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func DeleteIsolatedPresetHandler(w http.ResponseWriter, r *http.Request) {
+	presetName := slug.Make(strings.ToLower(r.PathValue("presetName")))
+
+	var mutex = &sync.Mutex{}
+	mutex.Lock()
+	delete(params.PresetCache, presetName)
+	delete(params.IsolatedPresets, presetName)
+	mutex.Unlock()
+
+	if env.FoxyEnvironment.PresetsFile != nil {
+		jsonStr, err := json.MarshalIndent(&params.IsolatedPresets, "", "  ")
+		if err != nil {
+			log.Println("Error marshaling presets file: ", err)
+		}
+
+		err = os.WriteFile(*env.FoxyEnvironment.PresetsFile, jsonStr, 0644)
+		if err != nil {
+			log.Println("Error writing presets file: ", err)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

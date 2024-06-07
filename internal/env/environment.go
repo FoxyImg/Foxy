@@ -24,7 +24,8 @@ type FoxyEnv struct {
 
 	RequireSignatureValidation bool `env:"REQUIRE_SIG_VALIDATION"`
 
-	AllowPresetManagement bool `env:"ALLOW_PRESET_MANAGEMENT"`
+	AllowPresetManagement bool    `env:"ALLOW_PRESET_MANAGEMENT"`
+	APIKey                *string `env:"API_KEY"`
 }
 
 var FoxyEnvironment = FoxyEnv{

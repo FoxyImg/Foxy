@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"foxy/internal/db"
 	"foxy/internal/env"
-	"github.com/jinzhu/copier"
 	"log"
 	"os"
 	"sync"
@@ -19,6 +18,7 @@ type Preset struct {
 
 var loadedPresets = false
 var PresetCache = make(map[string]*Preset)
+var IsolatedPresets = make(map[string]*Preset)
 
 func LoadPresetsFromJSON() error {
 	if loadedPresets {
@@ -43,9 +43,30 @@ func LoadPresetsFromJSON() error {
 		return err
 	}
 
+	IsolatedPresets = presets
+
+	fixedPresets := make(map[string]*Preset)
+	for key, preset := range presets {
+		paramsJSON, err := json.Marshal(preset.Params)
+		if err != nil {
+			return err
+		}
+
+		fixedParams := *NewImageParams()
+		err = json.Unmarshal(paramsJSON, &fixedParams)
+		if err != nil {
+			return err
+		}
+
+		fixedPresets[key] = &Preset{
+			Version: preset.Version,
+			Params:  fixedParams,
+		}
+	}
+
 	m := &sync.Mutex{}
 	m.Lock()
-	PresetCache = presets
+	PresetCache = fixedPresets
 	m.Unlock()
 
 	loadedPresets = true
@@ -63,13 +84,7 @@ func FetchPreset(appId *string, presetId string) (*ImageParams, int, error) {
 
 	if PresetCache[presetKey] != nil {
 		preset := PresetCache[presetKey]
-		var defParams = *NewImageParams()
-		err := copier.Copy(&defParams, &preset.Params)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		return &defParams, preset.Version, nil
+		return &preset.Params, preset.Version, nil
 	}
 
 	presetConfigJSON, err := db.RedisGet(presetKey)

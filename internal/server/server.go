@@ -9,11 +9,8 @@ import (
 func StartServer() {
 	mux := http.NewServeMux()
 
-	if env.FoxyEnvironment.AllowPresetManagement {
-		routes.RegisterSourceRoutes(mux)
-		routes.RegisterPresetRoutes(mux)
-	}
-
+	routes.RegisterSourceRoutes(mux)
+	routes.RegisterPresetRoutes(mux)
 	routes.RegisterImageRoutes(mux)
 
 	server := &http.Server{

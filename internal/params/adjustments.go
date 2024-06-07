@@ -187,10 +187,18 @@ func (opts *AdjustmentsParams) Process(sourceId string, config *config.Config, s
 			return sourceImage, err
 		}
 
-		err = sourceImage.Linear([]float64{1.0, 1.0 + vib, 1.0}, []float64{0.0, 0.0, 0.0})
-		if err != nil {
-			log.Println(err)
-			return sourceImage, err
+		if sourceImage.HasAlpha() {
+			err = sourceImage.Linear([]float64{1.0, 1.0 + vib, 1.0, 1.0}, []float64{0.0, 0.0, 0.0, 0.0})
+			if err != nil {
+				log.Println(err)
+				return sourceImage, err
+			}
+		} else {
+			err = sourceImage.Linear([]float64{1.0, 1.0 + vib, 1.0}, []float64{0.0, 0.0, 0.0})
+			if err != nil {
+				log.Println(err)
+				return sourceImage, err
+			}
 		}
 
 		err = sourceImage.ToColorSpace(currentCS)
