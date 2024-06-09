@@ -3,6 +3,7 @@ package params
 import (
 	"fmt"
 	"foxy/internal/config"
+	"foxy/internal/env"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -11,6 +12,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type RedactOptions struct {
@@ -163,6 +165,8 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 		return sourceImage, nil
 	}
 
+	defer utils.TrackTime(time.Now(), "Redact")
+
 	var redactedScale = 1.0
 	redactedParts, err := sourceImage.Copy()
 	if err != nil {
@@ -254,7 +258,7 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 	log.Println("Redact SVG:", svgString)
 	log.Println("Redact SVG:", overlaySvgString)
 
-	svg, err := vips.LoadImageFromBuffer([]byte(svgString), vips.NewImportParams())
+	svg, err := utils.RenderSVG(svgString) // vips.LoadImageFromBuffer([]byte(svgString), vips.NewImportParams())
 	if err != nil {
 		return sourceImage, err
 	}
@@ -267,11 +271,29 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 
 		if redact.BlurMask != nil && *redact.BlurMask > 0 {
 			_ = colorMask.GaussianBlur(float64(*redact.BlurMask))
+			colorMaskPng, _, err := colorMask.ExportPng(nil)
+			if err != nil {
+				return nil, err
+			}
+
+			colorMask, err = vips.NewImageFromBuffer(colorMaskPng)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if redact.PixelateMask != nil && *redact.PixelateMask > 0 {
 			_ = colorMask.Resize(1.0/float64(*redact.PixelateMask), vips.KernelLanczos3)
 			_ = colorMask.Resize(float64(*redact.PixelateMask), vips.KernelNearest)
+			colorMaskPng, _, err := colorMask.ExportPng(nil)
+			if err != nil {
+				return nil, err
+			}
+
+			colorMask, err = vips.NewImageFromBuffer(colorMaskPng)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if redactedScale != 1.0 {
@@ -279,9 +301,9 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 		}
 
 		_ = sourceImage.Composite(colorMask, vips.BlendModeOver, 0, 0)
-	} else if utils.IfNil(redact.Blur, 0) > 0 || utils.IfNil(redact.Blur, 0) > 0 {
+	} else if utils.IfNil(redact.Blur, 0) > 0 || utils.IfNil(redact.Pixelate, 0) > 0 {
 		if utils.IfNil(redact.UseColor, false) {
-			overlaySvg, err := vips.LoadImageFromBuffer([]byte(overlaySvgString), vips.NewImportParams())
+			overlaySvg, err := utils.RenderSVG(overlaySvgString) //vips.LoadImageFromBuffer([]byte(overlaySvgString), vips.NewImportParams())
 			if err != nil {
 				return sourceImage, err
 			}
@@ -305,20 +327,48 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 
 		if redact.Blur != nil && *redact.Blur > 0 {
 			_ = redactedParts.GaussianBlur(float64(*redact.Blur))
+			if env.FoxyEnvironment.AlwaysPrerender {
+				redactedParts, err = utils.RenderImage(redactedParts)
+				if err != nil {
+					return nil, err
+				}
+			}
+
 		}
 
 		if redact.Pixelate != nil && *redact.Pixelate > 0 {
 			_ = redactedParts.Resize(1.0/float64(*redact.Pixelate), vips.KernelLanczos3)
 			_ = redactedParts.Resize(float64(*redact.Pixelate), vips.KernelNearest)
+
+			if env.FoxyEnvironment.AlwaysPrerender {
+				redactedParts, err = utils.RenderImage(redactedParts)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 
 		if redact.BlurMask != nil && *redact.BlurMask > 0 {
 			_ = alpha.GaussianBlur(float64(*redact.BlurMask))
+
+			if env.FoxyEnvironment.AlwaysPrerender {
+				alpha, err = utils.RenderImage(alpha)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 
 		if redact.PixelateMask != nil && *redact.PixelateMask > 0 {
 			_ = alpha.Resize(1.0/float64(*redact.PixelateMask), vips.KernelLanczos3)
 			_ = alpha.Resize(float64(*redact.PixelateMask), vips.KernelNearest)
+
+			if env.FoxyEnvironment.AlwaysPrerender {
+				alpha, err = utils.RenderImage(alpha)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 
 		err = redactedParts.BandJoin(alpha)

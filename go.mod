@@ -6,11 +6,12 @@ require (
 	cloud.google.com/go/vision v1.2.0
 	github.com/aws/aws-sdk-go v1.53.10
 	github.com/cyphar/filepath-securejoin v0.2.5
-	github.com/davidbyttow/govips/v2 v2.14.0
+	github.com/davidbyttow/govips/v2 v2.15.0
 	github.com/gosimple/slug v1.14.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.5.1
+	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
 )
 
 require (
@@ -37,9 +38,6 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/api v0.70.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf // indirect
 	google.golang.org/grpc v1.44.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )
-
-replace github.com/davidbyttow/govips/v2 => github.com/interfacelab/govips-foxy/v2 v2.14.2

@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"strconv"
+	"time"
 )
 
 type AdjustmentsParams struct {
@@ -127,6 +128,8 @@ func (opts *AdjustmentsParams) ParseParams(param string, options []string) (need
 }
 
 func (opts *AdjustmentsParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+	defer utils.TrackTime(time.Now(), "Adjustments")
+
 	b := utils.IfNil(opts.Brightness, 1)
 	s := utils.IfNil(opts.Saturation, 1)
 	h := utils.IfNil(opts.Hue, 0)

@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type BoundingBoxCropParams struct {
@@ -229,6 +230,8 @@ func (sz *SizingOptions) ParseParams(param string, options []string) (needsVisio
 
 func (sz *SizingOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if sz.Width != nil || sz.Height != nil {
+		defer utils.TrackTime(time.Now(), "Sizing")
+
 		cW := sz.Width
 		cH := sz.Height
 

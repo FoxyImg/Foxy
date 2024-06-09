@@ -8,6 +8,7 @@ import (
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 	"strconv"
+	"time"
 )
 
 type RotationSizeMode int
@@ -58,6 +59,8 @@ func (opts *RotationParams) Process(sourceId string, config *config.Config, sour
 	if *opts.Rotation == 0 {
 		return sourceImage, nil
 	}
+
+	defer utils.TrackTime(time.Now(), "Rotation")
 
 	sw := sourceImage.Width()
 	sh := sourceImage.Height()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"foxy/internal/config"
 	"foxy/internal/geometry"
+	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type DebugOptions struct {
@@ -78,6 +80,8 @@ func (opt *DebugOptions) ParseParams(param string, options []string) (needsVisio
 }
 
 func (opt *DebugOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+	defer utils.TrackTime(time.Now(), "Draw Debug")
+
 	if (opt.Faces || opt.AllFaces || opt.People || opt.AllPeople || opt.OtherLabels) && imageMeta != nil {
 		drawDebugBounds(imageMeta, params, sourceImage)
 	}

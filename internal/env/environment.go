@@ -26,6 +26,8 @@ type FoxyEnv struct {
 
 	AllowPresetManagement bool    `env:"ALLOW_PRESET_MANAGEMENT"`
 	APIKey                *string `env:"API_KEY"`
+
+	AlwaysPrerender bool `env:"ALWAYS_PRERENDER"`
 }
 
 var FoxyEnvironment = FoxyEnv{
@@ -36,6 +38,7 @@ var FoxyEnvironment = FoxyEnv{
 	UseSourceConfigCache:  true,
 	AllowPresetManagement: false,
 	MaxSourceSize:         3840,
+	AlwaysPrerender:       true,
 }
 
 func Boot() {

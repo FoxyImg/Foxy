@@ -1,0 +1,11 @@
+name: foxy-img-proxy
+services:
+    foxy:
+        build: .
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./source.config.json:/source.config.json:ro
+            - ./presets.json:/presets.json
+            - ./.env:/.env:ro
+            - ./google.json:/google.json:ro

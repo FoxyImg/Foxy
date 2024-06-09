@@ -5,6 +5,7 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
 	"strconv"
+	"time"
 )
 
 type ExportOptions struct {
@@ -77,6 +78,7 @@ func (opt *ExportOptions) ExportJPEG(sourceImage *vips.ImageRef) (*[]byte, error
 	jpg.StripMetadata = true
 
 	buffer, _, err := sourceImage.ExportJpeg(jpg)
+
 	if err != nil {
 		log.Println("Export JPEG error:", err)
 		return nil, err
@@ -126,6 +128,8 @@ func (opt *ExportOptions) ExportWEBP(sourceImage *vips.ImageRef) (*[]byte, error
 }
 
 func (opt *ExportOptions) Export(sourceImage *vips.ImageRef) (*[]byte, error) {
+	defer utils.TrackTime(time.Now(), "Export")
+
 	if opt.Format == nil {
 		return opt.ExportJPEG(sourceImage)
 	}

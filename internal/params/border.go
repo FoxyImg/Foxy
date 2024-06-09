@@ -6,6 +6,7 @@ import (
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 	"strconv"
+	"time"
 )
 
 type BorderOptions struct {
@@ -84,6 +85,8 @@ func (opt *BorderOptions) ParseParams(param string, options []string) (needsVisi
 }
 
 func (opt *BorderOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+	defer utils.TrackTime(time.Now(), "Border")
+
 	l := utils.IfNil(opt.Left, 0)
 	t := utils.IfNil(opt.Top, 0)
 	r := utils.IfNil(opt.Right, 0)

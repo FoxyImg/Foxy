@@ -2,12 +2,14 @@ package params
 
 import (
 	"foxy/internal/config"
+	"foxy/internal/env"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type StylizeParams struct {
@@ -69,15 +71,32 @@ func (opts *StylizeParams) Process(sourceId string, config *config.Config, sourc
 	pixelate := utils.IfNil(opts.Pixelate, 0)
 
 	if opts.Order != nil && len(*opts.Order) != 0 && (blur != 0 || pixelate != 0) {
+		defer utils.TrackTime(time.Now(), "Stylize")
+
 		for _, order := range *opts.Order {
 			if order == "blur" && blur > 0 {
 				err := sourceImage.GaussianBlur(float64(blur))
 				if err != nil {
 					return sourceImage, err
 				}
+
+				if env.FoxyEnvironment.AlwaysPrerender {
+					sourceImage, err = utils.RenderImage(sourceImage)
+					if err != nil {
+						return nil, err
+					}
+				}
 			} else if order == "px" && pixelate > 0 {
 				_ = sourceImage.Resize(1.0/float64(pixelate), vips.KernelLanczos3)
 				_ = sourceImage.Resize(float64(pixelate), vips.KernelNearest)
+
+				if env.FoxyEnvironment.AlwaysPrerender {
+					var err error
+					sourceImage, err = utils.RenderImage(sourceImage)
+					if err != nil {
+						return nil, err
+					}
+				}
 			}
 		}
 	}

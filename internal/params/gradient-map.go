@@ -8,6 +8,7 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type GradientStop struct {
@@ -87,6 +88,8 @@ func (opts *GradientMapParams) ParseParams(param string, options []string) (need
 
 func (opts *GradientMapParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.Opacity != nil && *opts.Opacity > 0 && opts.Stops != nil && len(*opts.Stops) > 1 {
+		defer utils.TrackTime(time.Now(), "Gradient Map")
+
 		bm := utils.IfNil(opts.BlendMode, vips.BlendModeOver)
 
 		if !sourceImage.HasAlpha() {

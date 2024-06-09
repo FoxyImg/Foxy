@@ -8,6 +8,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type SourceCropParams struct {
@@ -65,6 +66,8 @@ func (opts *SourceCropParams) Process(sourceId string, config *config.Config, so
 	if opts.X == nil || opts.Y == nil || opts.Width == nil || opts.Height == nil {
 		return sourceImage, nil
 	}
+
+	defer utils.TrackTime(time.Now(), "Source Crop")
 
 	sw := float64(sourceImage.Width())
 	sh := float64(sourceImage.Height())

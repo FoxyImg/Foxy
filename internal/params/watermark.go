@@ -11,6 +11,7 @@ import (
 	"log"
 	"math"
 	"strconv"
+	"time"
 )
 
 type WatermarkDropShadowParams struct {
@@ -485,8 +486,10 @@ func (opts *WatermarkParams) ProcessImageWatermark(sourceId string, config *conf
 
 func (opts *WatermarkParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.Text != nil && opts.Font != nil {
+		defer utils.TrackTime(time.Now(), "Text Watermark")
 		return opts.ProcessTextWatermark(sourceId, config, sourceImage, params, imageMeta)
 	} else if opts.ImageKey != nil {
+		defer utils.TrackTime(time.Now(), "Image Watermark")
 		return opts.ProcessImageWatermark(sourceId, config, sourceImage, params, imageMeta)
 	}
 

@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"foxy/internal/config"
 	"foxy/internal/env"
+	"foxy/internal/utils"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func DetectFaces(sourceId string, sourceConfig *config.Config, sid string, key string, sourceImage *vips.ImageRef, skipCache bool) (*Metadata, error) {
+	defer utils.TrackTime(time.Now(), "Detect Faces")
+
 	var metaFilePath *string = nil
 	var metaFileName *string = nil
 
