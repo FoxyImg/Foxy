@@ -52,13 +52,28 @@ type Label struct {
 	Confidence float64       `json:"confidence"`
 }
 
+type UsedColor struct {
+	Used float64 `json:"used"`
+	R    int     `json:"r"`
+	G    int     `json:"g"`
+	B    int     `json:"b"`
+	L    float64 `json:"l"`
+}
+
+type DominantColors struct {
+	Lightest *UsedColor  `json:"lightest"`
+	Darkest  *UsedColor  `json:"darkest"`
+	Colors   []UsedColor `json:"colors"`
+}
+
 type Metadata struct {
-	Width            int     `json:"width"`
-	Height           int     `json:"height"`
-	Faces            []Face  `json:"faces"`
-	Labels           []Label `json:"labels"`
-	People           []Label `json:"people"`
-	ModerationLabels []Label `json:"moderationLabels"`
+	Width            int            `json:"width"`
+	Height           int            `json:"height"`
+	Faces            []Face         `json:"faces"`
+	Labels           []Label        `json:"labels"`
+	People           []Label        `json:"people"`
+	ModerationLabels []Label        `json:"moderationLabels"`
+	DominantColors   DominantColors `json:"dominantColors"`
 }
 
 func cropLabels(labels []Label, sw, sh, x, y, width, height float64) []Label {

@@ -8,9 +8,11 @@ import (
 	"foxy/internal/geometry"
 	"foxy/internal/utils"
 	"github.com/davidbyttow/govips/v2/vips"
+	"github.com/lucasb-eyer/go-colorful"
 	pb "google.golang.org/genproto/googleapis/cloud/vision/v1"
 	"math"
 	"slices"
+	"sort"
 )
 
 var personMids = []string{
@@ -277,6 +279,68 @@ func GoogleCloudVisionDetectFaces(sourceId string, sourceConfig *config.Config, 
 				Confidence: float64(webSafe.Racy) * 20.0,
 			})
 		}
+	}
+
+	imageProps, err := client.DetectImageProperties(ctx, image, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	darkestVal := math.MaxFloat64
+	lightestVal := 0.0
+	darkestIdx := -1
+	lightestIdx := -1
+
+	for idx, quantized := range imageProps.DominantColors.Colors {
+		color := quantized.Color
+		rgbColor := colorful.Color{R: float64(color.Red), G: float64(color.Green), B: float64(color.Blue)}
+		l, _, _ := rgbColor.Lab()
+		r := int(color.Red) & 0xff
+		g := int(color.Green) & 0xff
+		b := int(color.Blue) & 0xff
+		meta.DominantColors.Colors = append(meta.DominantColors.Colors, UsedColor{
+			Used: float64(quantized.PixelFraction) * 100,
+			R:    r,
+			G:    g,
+			B:    b,
+			L:    l,
+		})
+
+		if l < darkestVal {
+			darkestVal = l
+			darkestIdx = idx
+		}
+
+		if l > lightestVal {
+			lightestVal = l
+			lightestIdx = idx
+		}
+	}
+
+	if lightestIdx > -1 {
+		meta.DominantColors.Lightest = &UsedColor{
+			Used: meta.DominantColors.Colors[lightestIdx].Used,
+			R:    meta.DominantColors.Colors[lightestIdx].R,
+			G:    meta.DominantColors.Colors[lightestIdx].G,
+			B:    meta.DominantColors.Colors[lightestIdx].B,
+			L:    meta.DominantColors.Colors[lightestIdx].L,
+		}
+	}
+
+	if darkestIdx > -1 {
+		meta.DominantColors.Darkest = &UsedColor{
+			Used: meta.DominantColors.Colors[darkestIdx].Used,
+			R:    meta.DominantColors.Colors[darkestIdx].R,
+			G:    meta.DominantColors.Colors[darkestIdx].G,
+			B:    meta.DominantColors.Colors[darkestIdx].B,
+			L:    meta.DominantColors.Colors[darkestIdx].L,
+		}
+	}
+
+	if len(imageProps.DominantColors.Colors) > 0 {
+		sort.Slice(meta.DominantColors.Colors, func(i, j int) bool {
+			return meta.DominantColors.Colors[i].Used > meta.DominantColors.Colors[j].Used
+		})
 	}
 
 	return &meta, nil

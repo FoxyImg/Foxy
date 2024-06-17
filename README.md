@@ -353,3 +353,40 @@ Adds an external border to the image.
 /redact:mask:pixelate:<pixelate_amount>
 ```
 Blurs or pixelates the faces, people, or regions in the image.
+
+### Overlays
+Overlays are images, text or shapes (rectangles and ellipses) that are drawn on top of the image.  Overlays are the last step in the processing pipeline and can/should be used for watermarks and similar.
+
+You can have any number of overlays, though you are limited to the maximum length of the URL which is 4096 characters on most (but not all) systems.
+
+It's recommended for complicated overlays to consolidate what you can in an SVG and use that as part of the overlay.
+
+#### Overlay
+```html
+/ov:<overlay_index>:type:<image|text>
+/ov:<overlay_index>:url:<base64 encoded source key or path>
+/ov:<overlay_index>:text:<base64 encoded text>
+/ov:<overlay_index>:font:<base64 encoded fontname>
+/ov:<overlay_index>:xy:<px|rel>:<x>:<y>
+/ov:<overlay_index>:a:<left|center|right>:<top|center|bottom>
+/ov:<overlay_index>:sz:<px|rel>:<width>:<height>
+/ov:<overlay_index>:minsz:<width>:<height>
+/ov:<overlay_index>:maxsz:<width>:<height>
+/ov:<overlay_index>:rot:<angle>
+/ov:<overlay_index>:o:<opacity%>
+/ov:<overlay_index>:fit:<fit|fill|crop>
+/ov:<overlay_index>:tc:<text color>
+/ov:<overlay_index>:fc:<fill color>
+/ov:<overlay_index>:sc:<stroke color>
+/ov:<overlay_index>:sw:<stroke width>
+/ov:<overlay_index>:ds:o:<drop shadow opacity%>
+/ov:<overlay_index>:ds:c:<drop shadow color>
+/ov:<overlay_index>:ds:bl:<drop shadow blur>
+/ov:<overlay_index>:ds:xy:<x offset>:<y offset>
+/ov:<overlay_index>:bg:c:<background color>
+/ov:<overlay_index>:bg:bl:<background blur>
+/ov:<overlay_index>:bg:sat:<background saturation>
+/ov:<overlay_index>:bg:con:<background contrast>
+/ov:<overlay_index>:bg:bri:<background brightness>
+/ov:<overlay_index>:bg:pad:<px|rel>:<h padding>:<v padding>
+```

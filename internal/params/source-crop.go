@@ -77,13 +77,12 @@ func (opts *SourceCropParams) Process(sourceId string, config *config.Config, so
 		return nil, err
 	}
 
-	if imageMeta != nil {
-
-		if sw == 0 || sh == 0 {
-			return sourceImage, nil
-		}
-
+	if imageMeta != nil && sw > 0 && sh > 0 {
 		_ = imageMeta.SourceCrop(sw, sh, float64(*opts.X)/sw, float64(*opts.Y)/sh, float64(*opts.Width)/sw, float64(*opts.Height)/sh)
+	}
+
+	if params.Redact != nil && params.Redact.Regions != nil && len(*params.Redact.Regions) > 0 && sw > 0 && sh > 0 {
+		_ = params.Redact.SourceCrop(sw, sh, float64(*opts.X)/sw, float64(*opts.Y)/sh, float64(*opts.Width)/sw, float64(*opts.Height)/sh)
 	}
 
 	return sourceImage, nil

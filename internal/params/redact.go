@@ -15,17 +15,22 @@ import (
 	"time"
 )
 
+type RedactRegion struct {
+	Rect
+	CornerRadius int `json:"cornerRadius,omitempty"`
+}
+
 type RedactOptions struct {
-	Faces        *[]int  `json:"faces,omitempty"`
-	People       *[]int  `json:"people,omitempty"`
-	Regions      *[]Rect `json:"regions,omitempty"`
-	Blur         *int    `json:"blur,omitempty"`
-	BlurMask     *int    `json:"blurMask,omitempty"`
-	ExpandMask   *int    `json:"expandMask,omitempty"`
-	UseColor     *bool   `json:"useColor,omitempty"`
-	Color        *string `json:"color,omitempty"`
-	Pixelate     *int    `json:"pixelate,omitempty"`
-	PixelateMask *int    `json:"pixelateMask,omitempty"`
+	Faces        *[]int          `json:"faces,omitempty"`
+	People       *[]int          `json:"people,omitempty"`
+	Regions      *[]RedactRegion `json:"regions,omitempty"`
+	Blur         *int            `json:"blur,omitempty"`
+	BlurMask     *int            `json:"blurMask,omitempty"`
+	ExpandMask   *int            `json:"expandMask,omitempty"`
+	UseColor     *bool           `json:"useColor,omitempty"`
+	Color        *string         `json:"color,omitempty"`
+	Pixelate     *int            `json:"pixelate,omitempty"`
+	PixelateMask *int            `json:"pixelateMask,omitempty"`
 }
 
 func svgRect(sw int, sh int, l float64, t float64, w float64, h float64, rx string, ry string, expand int, color string, useAlpha bool) string {
@@ -56,6 +61,45 @@ func svgRect(sw int, sh int, l float64, t float64, w float64, h float64, rx stri
 
 func (redact *RedactOptions) Params() []string {
 	return []string{"redact"}
+}
+
+func (redact *RedactOptions) SourceCrop(sw, sh, x, y, width, height float64) error {
+	if redact.Regions == nil || len(*redact.Regions) == 0 {
+		return nil
+	}
+
+	px := sw * x
+	py := sh * y
+	pw := sw * width
+	ph := sh * height
+
+	var newRegions []RedactRegion
+	for _, region := range *redact.Regions {
+		fx := region.Left * sw
+		fy := region.Top * sh
+		fw := region.Width * sw
+		fh := region.Height * sh
+
+		region.Left = (fx - px) / pw
+		region.Top = (fy - py) / ph
+		region.Width = fw / pw
+		region.Height = fh / ph
+
+		if region.Left+region.Width < 0 {
+			continue
+		} else if region.Left > 1.0 {
+			continue
+		} else if region.Top+region.Height < 0 {
+			continue
+		} else if region.Top > 1.0 {
+			continue
+		}
+
+		newRegions = append(newRegions, region)
+	}
+	redact.Regions = &newRegions
+
+	return nil
 }
 
 func (redact *RedactOptions) ParseParams(param string, options []string) (needsVision bool) {
@@ -103,12 +147,13 @@ func (redact *RedactOptions) ParseParams(param string, options []string) (needsV
 				*redact.People = append(*redact.People, p)
 			}
 		}
-	} else if options[0] == "region" && len(options) == 2 {
-		regionParts := strings.Split(options[1], ",")
+	} else if options[0] == "region" && len(options) == 3 {
+		cornerRadius := *IntVal(options[1:])
+		regionParts := strings.Split(options[2], ",")
 
 		if len(regionParts) == 4 {
 			if redact.Regions == nil {
-				redact.Regions = utils.Ptr([]Rect{})
+				redact.Regions = utils.Ptr([]RedactRegion{})
 			}
 
 			l, _ := strconv.ParseFloat(regionParts[0], 64)
@@ -116,11 +161,14 @@ func (redact *RedactOptions) ParseParams(param string, options []string) (needsV
 			w, _ := strconv.ParseFloat(regionParts[2], 64)
 			h, _ := strconv.ParseFloat(regionParts[3], 64)
 
-			r := Rect{
-				Left:   l,
-				Top:    t,
-				Width:  w,
-				Height: h,
+			r := RedactRegion{
+				Rect: Rect{
+					Left:   l,
+					Top:    t,
+					Width:  w,
+					Height: h,
+				},
+				CornerRadius: cornerRadius,
 			}
 
 			*redact.Regions = append(*redact.Regions, r)
@@ -230,8 +278,8 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 
 	if redact.Regions != nil {
 		for _, region := range *redact.Regions {
-			rects = rects + svgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, "0", "0", 0, color, false)
-			overlayRects = overlayRects + svgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, "0", "0", 0, color, true)
+			rects = rects + svgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, fmt.Sprintf("%d%%", region.CornerRadius), fmt.Sprintf("%d%%", region.CornerRadius), 0, color, false)
+			overlayRects = overlayRects + svgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, fmt.Sprintf("%d%%", region.CornerRadius), fmt.Sprintf("%d%%", region.CornerRadius), 0, color, true)
 		}
 	}
 

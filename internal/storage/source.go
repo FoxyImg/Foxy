@@ -75,12 +75,7 @@ func GetSourceImageRef(sourceImageUrl string) (*vips.ImageRef, error) {
 	return sourceImage, nil
 }
 
-func GetCachedSourceFromUrl(sourceId string, key string, sourceImageUrl string, skipCache bool) (*vips.ImageRef, error) {
-	if skipCache || !env.FoxyEnvironment.UseCache || env.FoxyEnvironment.CacheDir == nil {
-		log.Println("Cache is disabled")
-		return GetSourceImageRef(sourceImageUrl)
-	}
-
+func GetCachedPathFromUrl(sourceId string, key string, sourceImageUrl string, skipCache bool) (*string, error) {
 	sourceFilePath := "/" + sourceId + "/" + strings.TrimLeft(key, "/")
 	sourceFileName, err := securejoin.SecureJoin(strings.TrimRight(*env.FoxyEnvironment.CacheDir, "/"), sourceFilePath)
 	if err != nil {
@@ -90,13 +85,7 @@ func GetCachedSourceFromUrl(sourceId string, key string, sourceImageUrl string, 
 	_, err = os.Stat(sourceFileName)
 	if err == nil {
 		log.Println("Cache hit")
-		img, err := vips.NewImageFromFile(sourceFileName)
-		if err != nil {
-			log.Println("New Image Error:", err)
-			return nil, err
-		}
-
-		return img, nil
+		return &sourceFileName, nil
 	}
 
 	sourcePath := filepath.Dir(sourceFileName)
@@ -137,7 +126,21 @@ func GetCachedSourceFromUrl(sourceId string, key string, sourceImageUrl string, 
 		return nil, err
 	}
 
-	img, err := vips.NewImageFromFile(sourceFileName)
+	return &sourceFileName, nil
+}
+
+func GetCachedSourceFromUrl(sourceId string, key string, sourceImageUrl string, skipCache bool) (*vips.ImageRef, error) {
+	if skipCache || !env.FoxyEnvironment.UseCache || env.FoxyEnvironment.CacheDir == nil {
+		log.Println("Cache is disabled")
+		return GetSourceImageRef(sourceImageUrl)
+	}
+
+	sourceFileName, err := GetCachedPathFromUrl(sourceId, key, sourceImageUrl, skipCache)
+	if err != nil {
+		return nil, err
+	}
+
+	img, err := vips.NewImageFromFile(*sourceFileName)
 	if err != nil {
 		log.Println("New Image Error:", err)
 		return nil, err

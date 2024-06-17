@@ -5,7 +5,7 @@ services:
         ports:
             - "8080:8080"
         volumes:
-            - ./source.config.json:/source.config.json:ro
+            - ./docker.config.json:/source.config.json:ro
             - ./presets.json:/presets.json
             - ./.env:/.env:ro
             - ./google.json:/google.json:ro

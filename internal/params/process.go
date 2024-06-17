@@ -118,8 +118,8 @@ func ProcessImage(
 		}
 	}
 
-	if params.Watermark != nil {
-		sourceImage, err = params.Watermark.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+	if len(params.Overlays) > 0 {
+		sourceImage, err = params.Overlays.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}

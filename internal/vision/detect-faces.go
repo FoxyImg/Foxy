@@ -31,7 +31,7 @@ func DetectFaces(sourceId string, sourceConfig *config.Config, sid string, key s
 		metaFileName = &mfn
 	}
 
-	if !skipCache && env.FoxyEnvironment.UseCache && env.FoxyEnvironment.CacheDir != nil && metaFilePath != nil && metaFileName != nil {
+	if !skipCache && env.FoxyEnvironment.UseVisionCache && env.FoxyEnvironment.CacheDir != nil && metaFilePath != nil && metaFileName != nil {
 		_, err := os.Stat(*metaFileName)
 		if err == nil {
 			jsonData, err := os.ReadFile(*metaFileName)
@@ -83,7 +83,8 @@ func DetectFaces(sourceId string, sourceConfig *config.Config, sid string, key s
 	}
 
 	if meta != nil {
-		if env.FoxyEnvironment.UseCache && env.FoxyEnvironment.CacheDir != nil && metaFilePath != nil && metaFileName != nil {
+		//if env.FoxyEnvironment.UseCache && env.FoxyEnvironment.CacheDir != nil && metaFilePath != nil && metaFileName != nil {
+		if env.FoxyEnvironment.CacheDir != nil && metaFilePath != nil && metaFileName != nil {
 			metaFilePath := filepath.Dir(*metaFileName)
 			err := os.MkdirAll(metaFilePath, os.ModePerm)
 			if err != nil {

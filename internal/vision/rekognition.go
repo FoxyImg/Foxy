@@ -4,8 +4,10 @@ import (
 	"errors"
 	"foxy/internal/config"
 	"foxy/internal/geometry"
+	"github.com/lucasb-eyer/go-colorful"
 	"log"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -90,7 +92,7 @@ func RekognitionDetectFaces(sourceId string, sourceConfig *config.Config, sid st
 	labelsResults, err := svc.DetectLabels(&rekognition.DetectLabelsInput{
 		MaxLabels: aws.Int64(64),
 		Image:     rekImage,
-		Features:  []*string{aws.String("GENERAL_LABELS")},
+		Features:  []*string{aws.String("GENERAL_LABELS"), aws.String("IMAGE_PROPERTIES")},
 	})
 
 	if err != nil {
@@ -169,6 +171,65 @@ func RekognitionDetectFaces(sourceId string, sourceConfig *config.Config, sid st
 	}
 
 	result.People = GetPersonLabels(result.Labels)
+
+	darkestVal := math.MaxFloat64
+	lightestVal := 0.0
+	darkestIdx := -1
+	lightestIdx := -1
+
+	if labelsResults.ImageProperties != nil {
+		for idx, color := range labelsResults.ImageProperties.DominantColors {
+			rgbColor := colorful.Color{R: float64(*color.Red) / 255.0, G: float64(*color.Green) / 255.0, B: float64(*color.Blue) / 255.0}
+			l, _, _ := rgbColor.Lab()
+			r := int(*color.Red)
+			g := int(*color.Green)
+			b := int(*color.Blue)
+			result.DominantColors.Colors = append(result.DominantColors.Colors, UsedColor{
+				Used: *color.PixelPercent,
+				R:    r,
+				G:    g,
+				B:    b,
+				L:    l,
+			})
+
+			if l < darkestVal {
+				darkestVal = l
+				darkestIdx = idx
+			}
+
+			if l > lightestVal {
+				lightestVal = l
+				lightestIdx = idx
+			}
+		}
+
+		if lightestIdx > -1 {
+			result.DominantColors.Lightest = &UsedColor{
+				Used: result.DominantColors.Colors[lightestIdx].Used,
+				R:    result.DominantColors.Colors[lightestIdx].R,
+				G:    result.DominantColors.Colors[lightestIdx].G,
+				B:    result.DominantColors.Colors[lightestIdx].B,
+				L:    result.DominantColors.Colors[lightestIdx].L,
+			}
+		}
+
+		if darkestIdx > -1 {
+			result.DominantColors.Darkest = &UsedColor{
+				Used: result.DominantColors.Colors[darkestIdx].Used,
+				R:    result.DominantColors.Colors[darkestIdx].R,
+				G:    result.DominantColors.Colors[darkestIdx].G,
+				B:    result.DominantColors.Colors[darkestIdx].B,
+				L:    result.DominantColors.Colors[darkestIdx].L,
+			}
+		}
+
+		if len(result.DominantColors.Colors) > 0 {
+			sort.Slice(result.DominantColors.Colors, func(i, j int) bool {
+				return result.DominantColors.Colors[i].Used > result.DominantColors.Colors[j].Used
+			})
+		}
+
+	}
 
 	return result, nil
 }
