@@ -18,6 +18,7 @@ import (
 type RedactRegion struct {
 	Rect
 	CornerRadius int `json:"cornerRadius,omitempty"`
+	Rotation     int `json:"rotation,omitempty"`
 }
 
 type RedactOptions struct {
@@ -56,6 +57,35 @@ func svgRect(sw int, sh int, l float64, t float64, w float64, h float64, rx stri
 
 	return fmt.Sprintf("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" rx=\"%s\" ry=\"%s\" style=\"fill:%s;\" />",
 		rl, rt, rw, rh, rx, ry, newColor,
+	)
+}
+
+func rotatedSvgRect(sw int, sh int, l float64, t float64, w float64, h float64, rx string, ry string, rotation int, expand int, color string, useAlpha bool) string {
+	newColor := color
+	if len(newColor) > 7 && !useAlpha {
+		newColor = newColor[0:7]
+	}
+
+	if expand > 0 {
+		expandX := w * (float64(expand) / 100.0)
+		expandY := h * (float64(expand) / 100.0)
+
+		l = l - (expandX / 2.0)
+		t = t - (expandY / 2.0)
+		w = w + expandX
+		h = h + expandY
+	}
+
+	rl := int(math.Round(l * float64(sw)))
+	rt := int(math.Round(t * float64(sh)))
+	rw := int(math.Round(w * float64(sw)))
+	rh := int(math.Round(h * float64(sh)))
+
+	rotx := rl + (rw / 2)
+	roty := rt + (rh / 2)
+
+	return fmt.Sprintf("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" rx=\"%s\" transform=\"rotate(%d %d %d)\" style=\"fill:%s;\" />",
+		rl, rt, rw, rh, rx, rotation, rotx, roty, newColor,
 	)
 }
 
@@ -147,9 +177,10 @@ func (redact *RedactOptions) ParseParams(param string, options []string) (needsV
 				*redact.People = append(*redact.People, p)
 			}
 		}
-	} else if options[0] == "region" && len(options) == 3 {
+	} else if options[0] == "region" && len(options) == 4 {
 		cornerRadius := *IntVal(options[1:])
-		regionParts := strings.Split(options[2], ",")
+		rotation := *IntVal(options[2:])
+		regionParts := strings.Split(options[3], ",")
 
 		if len(regionParts) == 4 {
 			if redact.Regions == nil {
@@ -169,6 +200,7 @@ func (redact *RedactOptions) ParseParams(param string, options []string) (needsV
 					Height: h,
 				},
 				CornerRadius: cornerRadius,
+				Rotation:     rotation,
 			}
 
 			*redact.Regions = append(*redact.Regions, r)
@@ -278,8 +310,9 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 
 	if redact.Regions != nil {
 		for _, region := range *redact.Regions {
-			rects = rects + svgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, fmt.Sprintf("%d%%", region.CornerRadius), fmt.Sprintf("%d%%", region.CornerRadius), 0, color, false)
-			overlayRects = overlayRects + svgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, fmt.Sprintf("%d%%", region.CornerRadius), fmt.Sprintf("%d%%", region.CornerRadius), 0, color, true)
+			cr := int((float64(region.CornerRadius) / 100.0) * (region.Width * float64(redactedParts.Width())))
+			rects = rects + rotatedSvgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, fmt.Sprintf("%d", cr), fmt.Sprintf("%d", cr), region.Rotation, 0, color, false)
+			overlayRects = overlayRects + rotatedSvgRect(redactedParts.Width(), redactedParts.Height(), region.Left, region.Top, region.Width, region.Height, fmt.Sprintf("%d", cr), fmt.Sprintf("%d", cr), region.Rotation, 0, color, true)
 		}
 	}
 
@@ -310,6 +343,8 @@ func (redact *RedactOptions) Process(sourceId string, config *config.Config, sou
 	if err != nil {
 		return sourceImage, err
 	}
+
+	_ = DumpDebugImage("redacted", svg)
 
 	if utils.IfNil(redact.UseColor, false) && utils.IfNil(redact.Blur, 0) == 0 && utils.IfNil(redact.Pixelate, 0) == 0 {
 		colorMask, err := svg.Copy()
