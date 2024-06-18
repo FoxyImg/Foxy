@@ -46,6 +46,8 @@ type ImageParams struct {
 	GradientMap *GradientMapParams `json:"gradientMap,omitempty"`
 	Adjustments *AdjustmentsParams `json:"adjustments,omitempty"`
 
+	Mask *MaskParams `json:"mask,omitempty"`
+
 	Export *ExportOptions `json:"export,omitempty"`
 
 	FlipH *bool `json:"flipH,omitempty"`
@@ -67,7 +69,9 @@ func NewImageParams() *ImageParams {
 		Stylize:     &StylizeParams{},
 		GradientMap: &GradientMapParams{},
 		Adjustments: &AdjustmentsParams{},
+		Mask:        &MaskParams{},
 		Overlays:    make(Overlays),
+
 		Export: &ExportOptions{
 			Format:  utils.Ptr("webp"),
 			Quality: utils.Ptr(85),
@@ -110,6 +114,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			_ = result.Export.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Overlays.Params(), split[0]) {
 			_ = result.Overlays.ParseParams(split[0], split[1:])
+		} else if slices.Contains(result.Mask.Params(), split[0]) {
+			_ = result.Mask.ParseParams(split[0], split[1:])
 		} else if split[0] == "meta" {
 			result.MetaOnly = true
 			result.NeedsVision = true

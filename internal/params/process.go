@@ -139,7 +139,14 @@ func ProcessImage(
 		}
 	}
 
-	buffer, err := params.Export.Export(sourceImage)
+	if params.Mask != nil {
+		sourceImage, err = params.Mask.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	buffer, err := params.Export.Export(sourceImage, params)
 	if err != nil {
 		return nil, nil, err
 	}

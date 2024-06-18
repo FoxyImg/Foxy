@@ -338,13 +338,24 @@ Adds interior padding to the image.
 ```
 Adds an external border to the image.
 
+#### Masking
+### Mask
+```html
+/mask:rect:<corner_radius>
+/mask:square:<corner_radius>
+/mask:ellipse
+/mask:circle
+/mask:image:<base64 encoded source key or path>:<fit>
+```
+Masks the image with a mask.  The mask type is one of `circle`, `ellipse`, `image`, `rect`, or `square`.
+
 ### Redactions
 
 #### Redact
 ```html
 /redact:faces:<face_list>
 /redact:people:<people_list>
-/redact:region:<region>
+/redact:region:<corner_radius>:<rotation>:<normalized_left>,<normalized_top>,<normalized_width>,<normalized_height>
 /redact:color:<color>
 /redact:blur:<blur_amount>
 /redact:pixelate:<pixelate_amount>

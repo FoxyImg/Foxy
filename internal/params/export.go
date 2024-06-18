@@ -58,7 +58,7 @@ func (opt *ExportOptions) ParseParams(param string, options []string) (needsVisi
 	return
 }
 
-func (opt *ExportOptions) ExportPNG(sourceImage *vips.ImageRef) (*[]byte, error) {
+func (opt *ExportOptions) ExportPNG(sourceImage *vips.ImageRef, params *ImageParams) (*[]byte, error) {
 	png := vips.NewPngExportParams()
 	png.Quality = utils.IfNil(opt.Quality, 85)
 	png.StripMetadata = true
@@ -72,7 +72,15 @@ func (opt *ExportOptions) ExportPNG(sourceImage *vips.ImageRef) (*[]byte, error)
 	return &buffer, nil
 }
 
-func (opt *ExportOptions) ExportJPEG(sourceImage *vips.ImageRef) (*[]byte, error) {
+func (opt *ExportOptions) ExportJPEG(sourceImage *vips.ImageRef, params *ImageParams) (*[]byte, error) {
+	if params.Background.Color != nil {
+		backgroundColor, bgColorErr := ParseHexColor(utils.IfNil(params.Background.Color, "00000000"))
+		if bgColorErr != nil {
+			backgroundColor = ColorRGBA{R: 0, G: 0, B: 0, A: 0}
+		}
+
+		_ = sourceImage.Flatten(&vips.Color{R: backgroundColor.R, G: backgroundColor.G, B: backgroundColor.B})
+	}
 	jpg := vips.NewJpegExportParams()
 	jpg.Quality = utils.IfNil(opt.Quality, 85)
 	jpg.StripMetadata = true
@@ -87,7 +95,7 @@ func (opt *ExportOptions) ExportJPEG(sourceImage *vips.ImageRef) (*[]byte, error
 	return &buffer, nil
 }
 
-func (opt *ExportOptions) ExportAVIF(sourceImage *vips.ImageRef) (*[]byte, error) {
+func (opt *ExportOptions) ExportAVIF(sourceImage *vips.ImageRef, params *ImageParams) (*[]byte, error) {
 	avif := vips.NewAvifExportParams()
 	avif.Quality = utils.IfNil(opt.Quality, 85)
 	avif.StripMetadata = true
@@ -101,7 +109,7 @@ func (opt *ExportOptions) ExportAVIF(sourceImage *vips.ImageRef) (*[]byte, error
 	return &buffer, nil
 }
 
-func (opt *ExportOptions) ExportWEBP(sourceImage *vips.ImageRef) (*[]byte, error) {
+func (opt *ExportOptions) ExportWEBP(sourceImage *vips.ImageRef, params *ImageParams) (*[]byte, error) {
 	webp := vips.NewWebpExportParams()
 	webp.Quality = utils.IfNil(opt.Quality, 85)
 	webp.StripMetadata = true
@@ -127,20 +135,20 @@ func (opt *ExportOptions) ExportWEBP(sourceImage *vips.ImageRef) (*[]byte, error
 	return &buffer, nil
 }
 
-func (opt *ExportOptions) Export(sourceImage *vips.ImageRef) (*[]byte, error) {
+func (opt *ExportOptions) Export(sourceImage *vips.ImageRef, params *ImageParams) (*[]byte, error) {
 	defer utils.TrackTime(time.Now(), "Export")
 
 	if opt.Format == nil {
-		return opt.ExportJPEG(sourceImage)
+		return opt.ExportJPEG(sourceImage, params)
 	}
 
 	if *opt.Format == "png" {
-		return opt.ExportPNG(sourceImage)
+		return opt.ExportPNG(sourceImage, params)
 	} else if *opt.Format == "webp" {
-		return opt.ExportWEBP(sourceImage)
+		return opt.ExportWEBP(sourceImage, params)
 	} else if *opt.Format == "avif" {
-		return opt.ExportAVIF(sourceImage)
+		return opt.ExportAVIF(sourceImage, params)
 	} else {
-		return opt.ExportJPEG(sourceImage)
+		return opt.ExportJPEG(sourceImage, params)
 	}
 }
