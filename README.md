@@ -67,7 +67,9 @@ The `signature` is a base64 encoded HMAC SHA256 of the URL using your `DEFAULT_U
 
 ## Parameters
 
-- **Crop/Resizing**
+- [Background Removal](#background-removal)
+- [Crop/Resizing](#cropresizing)
+  - [Source Crop](#source-crop)
   - [Crop Modes](#crop-modes)
   - [Width/Height](#width2Fheight)
   - [Aspect Ratio](#aspect-ratio)
@@ -81,10 +83,57 @@ The `signature` is a base64 encoded HMAC SHA256 of the URL using your `DEFAULT_U
   - [Person Gravity](#person-gravity)
   - [Person Padding](#person-padding)
   - [Person Zoom](#person-zoom)
-- **Image Properties**
+- [Adjustments](#adjustments)
+  - [Brightness](#brightness)
+  - [Saturation](#saturation)
+  - [Exposure](#exposure)
+  - [Gamma](#gamma)
+  - [Hue](#hue)
+- [Stylize](#stylize)
+  - [Blur](#blur)
+  - [Pixelate](#pixelate)
+  - [Stylize Order](#stylize-order)
+- [Gradient Map](#gradient-map)
+  - [Monochrome](#monochrome)
+  - [Blend Mode](#blend-mode)
+  - [Blur](#blur)
+  - [Opacity](#opacity)
+  - [Stops](#stops)
+- [Image Properties](#image-properties)
   - [Background Color](#background-color)
+- [Box/Padding](#boxpadding)
+  - [Padding](#padding)
+  - [Border](#border)
+- [Masking](#masking)
+  - [Mask](#mask)
+- [Redactions](#redactions)
+  - [Redact](#redact)
+- [Overlays](#overlays)
+  - [Overlay](#overlay)
+
+### Background Removal
+
+#### Replace Background With Color
+```html
+/bgr:c:<method>:<color>
+```
+Replace the background with a solid RGBA color.
+
+#### Replace Background With Image
+```html
+/bgr:img:<method>:<base64_encoded_image_key>
+```
+Replace the background with an image from the source.
+
+In both cases, `<method>` is one of `photoroom`, `fg` or `person`.  `photoroom` will use the Photoroom API to remove the background.  `fg` will use the foreground ML model to remove the background and `person` will use the person ML model to remove the background.
 
 ### Crop/Resizing
+
+#### Source Crop
+```html
+/src:<left>,<top>,<width>,<height>
+```
+Crops the source image before any additional processing is done.  This occurs AFTER vision has done any face detection.
 
 #### Crop Modes
 ```html
