@@ -1,4 +1,4 @@
-package photoroom
+package clipdrop
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ import (
 )
 
 func GetBackgroundMask(config *config.Config, sourceId string, key string, sourceImage *vips.ImageRef, skipCache bool) (*vips.ImageRef, error) {
-	sourceFilePath := "/" + sourceId + "/" + strings.TrimLeft(key, "/") + ".mask-photoroom.png"
+	sourceFilePath := "/" + sourceId + "/" + strings.TrimLeft(key, "/") + ".mask-clipdrop.png"
 	sourceFileName, err := securejoin.SecureJoin(strings.TrimRight(*env.FoxyEnvironment.CacheDir, "/"), sourceFilePath)
 	if !skipCache {
 		if err != nil {
@@ -37,18 +37,18 @@ func GetBackgroundMask(config *config.Config, sourceId string, key string, sourc
 		}
 	}
 
-	if config.APIKeys == nil || config.APIKeys.PhotoRoom == nil {
+	if config.APIKeys == nil || config.APIKeys.ClipDrop == nil {
 		return nil, nil
 	}
 
 	var pngData []byte
-	if sourceImage.Width() > 4000 || sourceImage.Height() > 4000 {
+	if utils.Max(sourceImage.Width(), sourceImage.Height()) > 5000 {
 		sourceCopy, err := sourceImage.Copy()
 		if err != nil {
 			return nil, err
 		}
 
-		sc := 4000.0 / float64(utils.Max(sourceCopy.Width(), sourceCopy.Height()))
+		sc := 5000.0 / float64(utils.Max(sourceCopy.Width(), sourceCopy.Height()))
 		_ = sourceCopy.Resize(sc, vips.KernelLanczos3)
 		pngData, _, err = sourceCopy.ExportPng(nil)
 		if err != nil {
@@ -80,11 +80,11 @@ func GetBackgroundMask(config *config.Config, sourceId string, key string, sourc
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "https://sdk.photoroom.com/v1/segment", payload)
+	req, err := http.NewRequest("POST", "https://clipdrop-api.co/remove-background/v1", payload)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("x-api-key", *config.APIKeys.PhotoRoom)
+	req.Header.Add("x-api-key", *config.APIKeys.ClipDrop)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	res, err := client.Do(req)
 	if err != nil {

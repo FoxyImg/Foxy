@@ -1,6 +1,7 @@
 package params
 
 import (
+	"foxy/internal/apis/clipdrop"
 	"foxy/internal/apis/photoroom"
 	"foxy/internal/config"
 	"foxy/internal/onnx"
@@ -53,6 +54,11 @@ func (opts *BackgroundRemovalParams) Process(sourceKey string, sourceId string, 
 	var err error
 	if *opts.Mode == "photoroom" && config.APIKeys != nil && config.APIKeys.PhotoRoom != nil {
 		maskImg, err = photoroom.GetBackgroundMask(config, sourceId, sourceKey, sourceImage, false)
+		if err != nil {
+			return sourceImage, err
+		}
+	} else if *opts.Mode == "clipdrop" && config.APIKeys != nil && config.APIKeys.ClipDrop != nil {
+		maskImg, err = clipdrop.GetBackgroundMask(config, sourceId, sourceKey, sourceImage, false)
 		if err != nil {
 			return sourceImage, err
 		}

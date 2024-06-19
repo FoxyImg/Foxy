@@ -298,7 +298,6 @@ Apply a pixelate effect to the image, 0 to 512.
 ```
 The order of the stylize effects to apply separated by a comma.  Valid values are `blur`, `px`.
 
-
 ### Gradient Map
 
 #### Monochrome
@@ -359,7 +358,6 @@ The opacity of the mapped image when composited with the source image, 0 to 100.
 ```
 The stops and colors to use when applying the gradient map.  Minimum two stops are required.
   
-
 ### Image Properties
 
 #### Background Color
@@ -388,6 +386,7 @@ Adds interior padding to the image.
 Adds an external border to the image.
 
 #### Masking
+
 ### Mask
 ```html
 /mask:rect:<corner_radius>

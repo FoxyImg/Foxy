@@ -13,6 +13,7 @@ import (
 
 type APIKeys struct {
 	PhotoRoom *string `json:"photoroom,omitempty"`
+	ClipDrop  *string `json:"clipdrop,omitempty"`
 }
 
 type S3Config struct {

@@ -14,7 +14,8 @@
       "useSourceCredentials": true
     },
     "keys": {
-      "photoroom": "photoroom_api_key"
+      "photoroom": "photoroom_api_key",
+      "clipdrop": "clipdrop_api_key"
     }
   },
   "local": {
@@ -33,7 +34,8 @@
       "useSourceCredentials": false
     },
     "keys": {
-      "photoroom": "photoroom_api_key"
+      "photoroom": "photoroom_api_key",
+      "clipdrop": "clipdrop_api_key"
     }
   },
   "web": {
@@ -52,7 +54,8 @@
       "useSourceCredentials": false
     },
     "keys": {
-      "photoroom": "photoroom_api_key"
+      "photoroom": "photoroom_api_key",
+      "clipdrop": "clipdrop_api_key"
     }
   }
 }
