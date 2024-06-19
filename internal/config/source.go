@@ -11,19 +11,23 @@ import (
 	"time"
 )
 
+type APIKeys struct {
+	PhotoRoom *string `json:"photoroom,omitempty"`
+}
+
 type S3Config struct {
-	Key    *string `json:"key"`
-	Secret *string `json:"secret"`
-	Bucket *string `json:"bucket"`
-	Region *string `json:"region"`
+	Key    *string `json:"key,omitempty"`
+	Secret *string `json:"secret,omitempty"`
+	Bucket *string `json:"bucket,omitempty"`
+	Region *string `json:"region,omitempty"`
 }
 
 type WebConfig struct {
-	Url *string `json:"url"`
+	Url *string `json:"url,omitempty"`
 }
 
 type LocalConfig struct {
-	Path *string `json:"path"`
+	Path *string `json:"path,omitempty"`
 }
 
 type SourceConfig struct {
@@ -34,8 +38,8 @@ type SourceConfig struct {
 }
 
 type CompreFaceConfig struct {
-	ApiKey *string `json:"apiKey"`
-	Url    *string `json:"url"`
+	ApiKey *string `json:"apiKey,omitempty"`
+	Url    *string `json:"url,omitempty"`
 }
 
 type VisionConfig struct {
@@ -47,10 +51,11 @@ type VisionConfig struct {
 }
 
 type Config struct {
-	AppId  *string       `json:"appId"`
-	Secret *string       `json:"secret"`
-	Source *SourceConfig `json:"source"`
-	Vision *VisionConfig `json:"vision"`
+	AppId   *string       `json:"appId"`
+	Secret  *string       `json:"secret"`
+	Source  *SourceConfig `json:"source"`
+	Vision  *VisionConfig `json:"vision"`
+	APIKeys *APIKeys      `json:"keys"`
 }
 
 var LoadedSources *map[string]*Config = nil

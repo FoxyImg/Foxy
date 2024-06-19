@@ -65,82 +65,89 @@ func ProcessImage(
 
 	var err error
 
+	if params.BackgroundRemoval != nil {
+		sourceImage, err = params.BackgroundRemoval.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	if params.SourceCrop != nil {
-		sourceImage, err = params.SourceCrop.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.SourceCrop.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Redact != nil {
-		sourceImage, err = params.Redact.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Redact.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Debug != nil {
-		_, _ = params.Debug.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		_, _ = params.Debug.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 	}
 
 	if params.Size != nil {
-		sourceImage, err = params.Size.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Size.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Rotation != nil {
-		sourceImage, err = params.Rotation.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Rotation.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Adjustments != nil {
-		sourceImage, err = params.Adjustments.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Adjustments.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.GradientMap != nil {
-		sourceImage, err = params.GradientMap.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.GradientMap.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Stylize != nil {
-		sourceImage, err = params.Stylize.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Stylize.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if len(params.Overlays) > 0 {
-		sourceImage, err = params.Overlays.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Overlays.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Padding != nil {
-		sourceImage, err = params.Padding.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Padding.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Border != nil {
-		sourceImage, err = params.Border.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Border.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if params.Mask != nil {
-		sourceImage, err = params.Mask.Process(sourceId, sourceConfig, sourceImage, params, visionMeta)
+		sourceImage, err = params.Mask.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}

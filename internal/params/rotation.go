@@ -51,7 +51,7 @@ func (opts *RotationParams) ParseParams(param string, options []string) (needsVi
 	return
 }
 
-func (opts *RotationParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *RotationParams) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.Rotation == nil {
 		return sourceImage, nil
 	}

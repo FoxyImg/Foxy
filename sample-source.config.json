@@ -12,6 +12,9 @@
       "type": "rekognition",
       "enabled": true,
       "useSourceCredentials": true
+    },
+    "keys": {
+      "photoroom": "photoroom_api_key"
     }
   },
   "local": {
@@ -28,6 +31,9 @@
       "secret": "secret",
       "enabled": true,
       "useSourceCredentials": false
+    },
+    "keys": {
+      "photoroom": "photoroom_api_key"
     }
   },
   "web": {
@@ -44,6 +50,9 @@
       "secret": "secret",
       "enabled": true,
       "useSourceCredentials": false
+    },
+    "keys": {
+      "photoroom": "photoroom_api_key"
     }
   }
 }

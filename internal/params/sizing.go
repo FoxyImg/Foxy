@@ -228,7 +228,7 @@ func (sz *SizingOptions) ParseParams(param string, options []string) (needsVisio
 	return
 }
 
-func (sz *SizingOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (sz *SizingOptions) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if sz.Width != nil || sz.Height != nil {
 		defer utils.TrackTime(time.Now(), "Sizing")
 

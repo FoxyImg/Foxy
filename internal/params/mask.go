@@ -51,7 +51,7 @@ func (opts *MaskParams) ParseParams(param string, options []string) (needsVision
 	return
 }
 
-func (opts *MaskParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *MaskParams) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.Type == nil {
 		return sourceImage, nil
 	}

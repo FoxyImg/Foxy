@@ -127,7 +127,7 @@ func (opts *AdjustmentsParams) ParseParams(param string, options []string) (need
 	return
 }
 
-func (opts *AdjustmentsParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *AdjustmentsParams) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	defer utils.TrackTime(time.Now(), "Adjustments")
 
 	b := utils.IfNil(opts.Brightness, 1)

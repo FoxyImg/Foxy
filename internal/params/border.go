@@ -84,7 +84,7 @@ func (opt *BorderOptions) ParseParams(param string, options []string) (needsVisi
 	return
 }
 
-func (opt *BorderOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opt *BorderOptions) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	defer utils.TrackTime(time.Now(), "Border")
 
 	l := utils.IfNil(opt.Left, 0)

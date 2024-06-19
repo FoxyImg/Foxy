@@ -17,7 +17,7 @@ func (*PadOptions) Params() []string {
 	return []string{"pad"}
 }
 
-func (opt *PadOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opt *PadOptions) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	defer utils.TrackTime(time.Now(), "Padding")
 
 	l := utils.IfNil(opt.Left, 0)

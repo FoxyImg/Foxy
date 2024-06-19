@@ -34,6 +34,12 @@ type FoxyEnv struct {
 	AlwaysPrerender bool `env:"ALWAYS_PRERENDER"`
 
 	DebugImages *bool `env:"DEBUG_IMAGES"`
+
+	UseML               *bool   `env:"USE_ML"`
+	OnnxLib             *string `env:"ONNX_LIB"`
+	OnnxModelHumans     *string `env:"ONNX_MODEL_HUMANS"`
+	OnnxModelForeground *string `env:"ONNX_MODEL_FOREGROUND"`
+	OnnxUseCoreML       *bool   `env:"ONNX_USE_CORE_ML"`
 }
 
 var FoxyEnvironment = FoxyEnv{
@@ -47,6 +53,8 @@ var FoxyEnvironment = FoxyEnv{
 	MaxSourceSize:         3840,
 	AlwaysPrerender:       true,
 	DebugImages:           utils.Ptr(false),
+	UseML:                 utils.Ptr(false),
+	OnnxUseCoreML:         utils.Ptr(false),
 }
 
 func Boot() {

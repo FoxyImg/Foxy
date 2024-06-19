@@ -79,7 +79,7 @@ func (opt *DebugOptions) ParseParams(param string, options []string) (needsVisio
 	return
 }
 
-func (opt *DebugOptions) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opt *DebugOptions) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	defer utils.TrackTime(time.Now(), "Draw Debug")
 
 	if (opt.Faces || opt.AllFaces || opt.People || opt.AllPeople || opt.OtherLabels) && imageMeta != nil {

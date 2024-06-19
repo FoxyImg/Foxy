@@ -62,7 +62,7 @@ func (opts *SourceCropParams) ParseParams(param string, options []string) (needs
 	return
 }
 
-func (opts *SourceCropParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (opts *SourceCropParams) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.X == nil || opts.Y == nil || opts.Width == nil || opts.Height == nil {
 		return sourceImage, nil
 	}

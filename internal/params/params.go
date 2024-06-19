@@ -31,6 +31,8 @@ type ImageParams struct {
 	MetaOnly    bool `json:"-"`
 	NeedsVision bool `json:"vision"`
 
+	BackgroundRemoval *BackgroundRemovalParams `json:"backgroundRemoval,omitempty"`
+
 	SourceCrop *SourceCropParams `json:"sourceCrop,omitempty"`
 
 	Rotation *RotationParams `json:"rotation,omitempty"`
@@ -58,19 +60,20 @@ type ImageParams struct {
 
 func NewImageParams() *ImageParams {
 	return &ImageParams{
-		SourceCrop:  &SourceCropParams{},
-		Debug:       &DebugOptions{},
-		Background:  &BackgroundOptions{},
-		Rotation:    &RotationParams{},
-		Size:        &SizingOptions{},
-		Border:      &BorderOptions{},
-		Padding:     &PadOptions{},
-		Redact:      &RedactOptions{},
-		Stylize:     &StylizeParams{},
-		GradientMap: &GradientMapParams{},
-		Adjustments: &AdjustmentsParams{},
-		Mask:        &MaskParams{},
-		Overlays:    make(Overlays),
+		BackgroundRemoval: &BackgroundRemovalParams{},
+		SourceCrop:        &SourceCropParams{},
+		Debug:             &DebugOptions{},
+		Background:        &BackgroundOptions{},
+		Rotation:          &RotationParams{},
+		Size:              &SizingOptions{},
+		Border:            &BorderOptions{},
+		Padding:           &PadOptions{},
+		Redact:            &RedactOptions{},
+		Stylize:           &StylizeParams{},
+		GradientMap:       &GradientMapParams{},
+		Adjustments:       &AdjustmentsParams{},
+		Mask:              &MaskParams{},
+		Overlays:          make(Overlays),
 
 		Export: &ExportOptions{
 			Format:  utils.Ptr("webp"),
@@ -88,6 +91,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 		if slices.Contains(result.Size.Params(), split[0]) {
 			nv := result.Size.ParseParams(split[0], split[1:])
 			result.NeedsVision = result.NeedsVision || nv
+		} else if slices.Contains(result.BackgroundRemoval.Params(), split[0]) {
+			_ = result.BackgroundRemoval.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.SourceCrop.Params(), split[0]) {
 			_ = result.SourceCrop.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Rotation.Params(), split[0]) {

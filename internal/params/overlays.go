@@ -679,7 +679,7 @@ func (overlay *OverlayParams) ProcessImageOverlay(sourceId string, config *confi
 	return sourceImage, nil
 }
 
-func (overlay *OverlayParams) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (overlay *OverlayParams) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if overlay.Type == "text" {
 		return overlay.ProcessTextOverlay(sourceId, config, sourceImage, params, imageMeta)
 	} else if overlay.Type == "image" {
@@ -689,10 +689,10 @@ func (overlay *OverlayParams) Process(sourceId string, config *config.Config, so
 	return sourceImage, nil
 }
 
-func (overlays Overlays) Process(sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
+func (overlays Overlays) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	for _, overlay := range overlays {
 		var err error
-		sourceImage, err = overlay.Process(sourceId, config, sourceImage, params, imageMeta)
+		sourceImage, err = overlay.Process(sourceKey, sourceId, config, sourceImage, params, imageMeta)
 		if err != nil {
 			return nil, err
 		}
