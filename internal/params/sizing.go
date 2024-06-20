@@ -11,7 +11,6 @@ import (
 	"math"
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -90,12 +89,8 @@ func (sz *SizingOptions) ParseParams(param string, options []string) (needsVisio
 	needsVision = false
 	switch param {
 	case "crop":
-		if len(options) != 1 {
-			return
-		}
-		types := strings.Split(options[0], ",")
-		sz.Crop = &types
-		needsVision = slices.Contains(types, "face") || slices.Contains(types, "person")
+		sz.Crop = &options
+		needsVision = slices.Contains(*sz.Crop, "face") || slices.Contains(*sz.Crop, "person")
 	case "w":
 		if len(options) != 1 {
 			return

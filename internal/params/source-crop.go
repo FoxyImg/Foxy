@@ -7,7 +7,6 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -25,31 +24,26 @@ func (*SourceCropParams) Params() []string {
 func (opts *SourceCropParams) ParseParams(param string, options []string) (needsVision bool) {
 	needsVision = false
 
-	if len(options) == 0 {
+	if len(options) != 4 {
 		return
 	}
 
-	parts := strings.Split(options[0], ",")
-	if len(parts) != 4 {
-		return
-	}
-
-	x, err := strconv.ParseFloat(parts[0], 64)
+	x, err := strconv.ParseFloat(options[0], 64)
 	if err != nil {
 		return
 	}
 
-	y, err := strconv.ParseFloat(parts[1], 64)
+	y, err := strconv.ParseFloat(options[1], 64)
 	if err != nil {
 		return
 	}
 
-	w, err := strconv.ParseFloat(parts[2], 64)
+	w, err := strconv.ParseFloat(options[2], 64)
 	if err != nil {
 		return
 	}
 
-	h, err := strconv.ParseFloat(parts[3], 64)
+	h, err := strconv.ParseFloat(options[3], 64)
 	if err != nil {
 		return
 	}
