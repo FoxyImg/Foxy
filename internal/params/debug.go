@@ -11,7 +11,6 @@ import (
 	"math"
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -36,44 +35,34 @@ func (opt *DebugOptions) ParseParams(param string, options []string) (needsVisio
 
 	switch param {
 	case "debug":
-		if len(options) != 1 {
-			return
-		}
-
-		types := strings.Split(options[0], ",")
-		if slices.Contains(types, "faces") {
+		if slices.Contains(options, "faces") {
 			needsVision = true
 			opt.Faces = true
 		}
 
-		if slices.Contains(types, "all-faces") {
+		if slices.Contains(options, "all-faces") {
 			needsVision = true
 			opt.AllFaces = true
 		}
 
-		if slices.Contains(types, "people") {
+		if slices.Contains(options, "people") {
 			needsVision = true
 			opt.People = true
 		}
 
-		if slices.Contains(types, "all-people") {
+		if slices.Contains(options, "all-people") {
 			needsVision = true
 			opt.AllPeople = true
 		}
 
-		if slices.Contains(types, "other-labels") {
+		if slices.Contains(options, "other-labels") {
 			needsVision = true
 			opt.OtherLabels = true
 		}
 	case "nocache":
-		if len(options) != 1 {
-			return
-		}
-
-		types := strings.Split(options[0], ",")
-		opt.DisableSourceCache = slices.Contains(types, "source")
-		opt.DisableRenderCache = slices.Contains(types, "render")
-		opt.DisableMetaCache = slices.Contains(types, "meta")
+		opt.DisableSourceCache = slices.Contains(options, "source")
+		opt.DisableRenderCache = slices.Contains(options, "render")
+		opt.DisableMetaCache = slices.Contains(options, "meta")
 	}
 
 	return
