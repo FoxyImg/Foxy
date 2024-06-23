@@ -104,6 +104,13 @@ func ProcessImage(
 		}
 	}
 
+	if params.Levels != nil {
+		sourceImage, err = params.Levels.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	if params.Adjustments != nil {
 		sourceImage, err = params.Adjustments.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {

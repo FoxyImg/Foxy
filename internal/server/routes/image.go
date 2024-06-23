@@ -11,7 +11,6 @@ import (
 	"foxy/internal/utils"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -38,7 +37,7 @@ func sendImageResult(w http.ResponseWriter, format string, buffer *[]byte) {
 }
 
 func GetImageHandler(w http.ResponseWriter, r *http.Request) {
-	defer utils.TrackTime(time.Now(), "Handle Images Route: "+r.URL.Path)
+	defer utils.TrackTime(time.Now(), "Handle Images Route: "+r.URL.Path+"?"+r.URL.RawQuery)
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
@@ -56,37 +55,53 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for len(parts[2])%4 != 0 {
-		parts[2] += "="
-	}
-	source, err := base64.URLEncoding.DecodeString(parts[2])
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	imgixMode := utils.IfNil(sourceConfig.ImgixMode, false)
+
+	var source string
+	if imgixMode {
+		source = strings.Join(parts[2:], "/")
+	} else {
+		for len(parts[2])%4 != 0 {
+			parts[2] += "="
+		}
+		sourceBytes, err := base64.URLEncoding.DecodeString(parts[2])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		source = string(sourceBytes)
 	}
 
 	var checkSig = true
 	var imageParams *params.ImageParams
 
-	if len(parts) >= 4 && strings.HasPrefix(parts[3], "@") {
-		p, version, paramsErr := params.FetchPreset(sourceConfig.AppId, parts[3][1:])
+	//TODO: Preset handling
+	//if len(parts) >= 4 && strings.HasPrefix(parts[3], "@") {
+	//	p, version, paramsErr := params.FetchPreset(sourceConfig.AppId, parts[3][1:])
+	//	if paramsErr != nil {
+	//		w.WriteHeader(http.StatusBadRequest)
+	//		return
+	//	}
+	//
+	//	checkSig = false
+	//	imageParams = p
+	//	parts = append(parts, "version:"+strconv.Itoa(version))
+	//}
+
+	if imgixMode {
+		p, paramsErr := params.BuildParamsFromQuery(r.URL.Query())
 		if paramsErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-
-		checkSig = false
 		imageParams = p
-		parts = append(parts, "version:"+strconv.Itoa(version))
-	}
-
-	if imageParams == nil {
+	} else {
 		p, paramsErr := params.BuildParams(parts[3:])
 		if paramsErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-
 		imageParams = p
 	}
 
@@ -101,13 +116,20 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if !utils.VerifySignature(*sourceConfig.Secret, r.URL.Query().Get("s"), strings.TrimRight(r.URL.Path, "/")) {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+		if imgixMode {
+			if !utils.VerifySignatureFromQuery(*sourceConfig.Secret, source, r.URL.Query()) {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		} else {
+			if !utils.VerifySignature(*sourceConfig.Secret, r.URL.Query().Get("s"), strings.TrimRight(r.URL.Path, "/")) {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
 		}
 	}
 
-	if r.URL.Query().Has("preset") {
+	if r.URL.Query().Has("showpreset") {
 		paramsJSON, jsonErr := json.Marshal(imageParams)
 		if jsonErr != nil {
 			fmt.Println("Marshal JSON Error: ", jsonErr)

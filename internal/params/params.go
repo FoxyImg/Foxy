@@ -2,6 +2,7 @@ package params
 
 import (
 	"foxy/internal/utils"
+	"net/url"
 	"slices"
 	"strings"
 )
@@ -32,6 +33,8 @@ type ImageParams struct {
 	NeedsVision bool `json:"vision"`
 
 	BackgroundRemoval *BackgroundRemovalParams `json:"backgroundRemoval,omitempty"`
+
+	Levels *LevelsParams `json:"levels,omitempty"`
 
 	SourceCrop *SourceCropParams `json:"sourceCrop,omitempty"`
 
@@ -64,6 +67,7 @@ func NewImageParams() *ImageParams {
 		SourceCrop:        &SourceCropParams{},
 		Debug:             &DebugOptions{},
 		Background:        &BackgroundOptions{},
+		Levels:            &LevelsParams{},
 		Rotation:          &RotationParams{},
 		Size:              &SizingOptions{},
 		Border:            &BorderOptions{},
@@ -82,6 +86,31 @@ func NewImageParams() *ImageParams {
 	}
 }
 
+func BuildParamsFromQuery(values url.Values) (*ImageParams, error) {
+	var pathParts []string
+	for key, value := range values {
+		if key == "_" {
+			continue
+		}
+
+		if key == "s" {
+			continue
+		}
+
+		if key == "showpreset" {
+			continue
+		}
+
+		if value == nil || len(value) == 0 || value[0] == "" {
+			pathParts = append(pathParts, strings.ReplaceAll(key, "-", ":"))
+		} else {
+			pathParts = append(pathParts, strings.ReplaceAll(key, "-", ":")+":"+strings.Join(value, ","))
+		}
+	}
+
+	return BuildParams(pathParts)
+}
+
 func BuildParams(pathParts []string) (*ImageParams, error) {
 	result := *NewImageParams()
 
@@ -95,6 +124,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 			_ = result.BackgroundRemoval.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.SourceCrop.Params(), split[0]) {
 			_ = result.SourceCrop.ParseParams(split[0], split[1:])
+		} else if slices.Contains(result.Levels.Params(), split[0]) {
+			_ = result.Levels.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Rotation.Params(), split[0]) {
 			_ = result.Rotation.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.Adjustments.Params(), split[0]) {

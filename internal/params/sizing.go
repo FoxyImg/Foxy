@@ -46,7 +46,7 @@ type SizingOptions struct {
 }
 
 func (*SizingOptions) Params() []string {
-	return []string{"crop", "w", "h", "zoom", "ar", "fp", "face", "person", "smart", "gravity"}
+	return []string{"crop", "w", "h", "d", "zoom", "ar", "fp", "face", "person", "smart", "gravity"}
 }
 
 func (bbx *BoundingBoxCropParams) parseBoundingBoxCropParams(options []string) {
@@ -113,6 +113,12 @@ func (sz *SizingOptions) ParseParams(param string, options []string) (needsVisio
 		}
 
 		sz.Height = &h
+	case "d":
+		if len(options) != 2 {
+			return
+		}
+
+		sz.Width, sz.Height = Int2DVectorVal(options)
 	case "zoom":
 		if len(options) != 1 {
 			return
