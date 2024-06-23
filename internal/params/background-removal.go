@@ -114,9 +114,16 @@ func (opts *BackgroundRemovalParams) Process(sourceKey string, sourceId string, 
 		_ = oimg.Composite(sourceImage, vips.BlendModeOver, 0, 0)
 		sourceImage = oimg
 	} else if opts.BackgroundColor != nil && *opts.BackgroundColor != "" {
-		backgroundColor, bgColorErr := ParseHexColor(utils.IfNil(params.Background.Color, "00000000"))
+		backgroundColor, bgColorErr := ParseHexColor(utils.IfNil(opts.BackgroundColor, "00000000"))
 		if bgColorErr == nil {
-			_ = sourceImage.Flatten(&vips.Color{R: backgroundColor.R, G: backgroundColor.G, B: backgroundColor.B})
+			colorCopy, err := sourceImage.Copy()
+			if err != nil {
+				return sourceImage, err
+			}
+
+			_ = colorCopy.Linear([]float64{0, 0, 0, 0}, []float64{float64(backgroundColor.R), float64(backgroundColor.G), float64(backgroundColor.B), float64(backgroundColor.A)})
+			_ = colorCopy.Composite(sourceImage, vips.BlendModeOver, 0, 0)
+			sourceImage = colorCopy
 		}
 	}
 
