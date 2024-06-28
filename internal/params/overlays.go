@@ -11,6 +11,7 @@ import (
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
+	"html"
 	"math"
 	"path/filepath"
 	"sort"
@@ -71,6 +72,9 @@ type OverlayParams struct {
 	HAnchor        *string                  `json:"hAnchor,omitempty"`
 	VAnchor        *string                  `json:"vAnchor,omitempty"`
 	TextColor      *string                  `json:"textColor,omitempty"`
+	FillColor      *string                  `json:"fillColor,omitempty"`
+	StrokeColor    *string                  `json:"strikeColor,omitempty"`
+	StrokeWidth    *int                     `json:"strokeWidth,omitempty"`
 	Substitutes    map[string]string        `json:"substitutes,omitempty"`
 	DropShadow     *OverlayDropShadowParams `json:"dropShadow,omitempty"`
 	Background     *OverlayBackgroundParams `json:"background,omitempty"`
@@ -157,12 +161,12 @@ func (o *OverlayParams) ParseParams(param string, options []string) (needsVision
 			o.VAnchor = &options[2]
 		}
 	case "sub":
-		if len(options) == 3 {
+		if len(options) == 4 {
 			if o.Substitutes == nil {
 				o.Substitutes = make(map[string]string)
 			}
 
-			o.Substitutes[*DecodeBase64StringVal(options[1:])] = *DecodeBase64StringVal(options[2:])
+			o.Substitutes[*DecodeBase64StringVal(options[2:])] = html.EscapeString(*DecodeBase64StringVal(options[3:]))
 		}
 	case "pad":
 		o.HPadding, o.VPadding = Int2DVectorVal(options[1:])

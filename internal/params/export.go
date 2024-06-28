@@ -9,11 +9,11 @@ import (
 )
 
 type ExportOptions struct {
-	Format          *string `json:"format"`
-	Quality         *int    `json:"quality"`
-	ReductionEffort *int    `json:"reductionEffort"`
-	Lossless        *bool   `json:"lossless"`
-	NearLossless    *bool   `json:"nearLossless"`
+	Format          *string `json:"format,omitempty"`
+	Quality         *int    `json:"quality,omitempty"`
+	ReductionEffort *int    `json:"reductionEffort,omitempty"`
+	Lossless        *bool   `json:"lossless,omitempty"`
+	NearLossless    *bool   `json:"nearLossless,omitempty"`
 }
 
 func (*ExportOptions) Params() []string {

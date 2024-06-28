@@ -3,15 +3,15 @@ package storage
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"foxy/internal/env"
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
-func GetCachedResult(sid string, key string, params []string, format string) (*[]byte, error) {
+func GetCachedResult(sid string, key string, params any, format string) (*[]byte, error) {
 	if !env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil {
 		log.Println("Render cache is disabled")
 		return nil, nil
@@ -19,14 +19,19 @@ func GetCachedResult(sid string, key string, params []string, format string) (*[
 
 	sourceName := filepath.Base(strings.TrimSuffix(key, filepath.Ext(key)))
 
-	sort.Strings(params)
-	paramsKey := strings.Join(params, "/")
+	var paramsJSON []byte
+	paramsJSON, err := json.Marshal(params)
+	if err != nil {
+		log.Println("Marshal JSON Error:", err)
+		return nil, err
+	}
+
 	hasher := md5.New()
-	hasher.Write([]byte(paramsKey))
+	hasher.Write(paramsJSON)
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
 	hashedFileName := strings.TrimRight(*env.FoxyEnvironment.RenderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
-	_, err := os.Stat(hashedFileName)
+	_, err = os.Stat(hashedFileName)
 	if err == nil {
 		log.Println("Render cache hit")
 		data, err := os.ReadFile(hashedFileName)
@@ -41,7 +46,7 @@ func GetCachedResult(sid string, key string, params []string, format string) (*[
 	return nil, nil
 }
 
-func SetCachedResult(sid string, key string, params []string, format string, data *[]byte) error {
+func SetCachedResult(sid string, key string, params any, format string, data *[]byte) error {
 	if !env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil {
 		log.Println("Render cache is disabled")
 		return nil
@@ -49,16 +54,21 @@ func SetCachedResult(sid string, key string, params []string, format string, dat
 
 	sourceName := filepath.Base(strings.TrimSuffix(key, filepath.Ext(key)))
 
-	sort.Strings(params)
-	paramsKey := strings.Join(params, "/")
+	var paramsJSON []byte
+	paramsJSON, err := json.Marshal(params)
+	if err != nil {
+		log.Println("Marshal JSON Error:", err)
+		return err
+	}
+
 	hasher := md5.New()
-	hasher.Write([]byte(paramsKey))
+	hasher.Write(paramsJSON)
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
 	hashedFileName := strings.TrimRight(*env.FoxyEnvironment.RenderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
 
 	hashedPath := filepath.Dir(hashedFileName)
-	err := os.MkdirAll(hashedPath, os.ModePerm)
+	err = os.MkdirAll(hashedPath, os.ModePerm)
 	if err != nil {
 		log.Println("MkdirAll Error:", err)
 		return err

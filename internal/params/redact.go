@@ -177,10 +177,10 @@ func (redact *RedactOptions) ParseParams(param string, options []string) (needsV
 				*redact.People = append(*redact.People, p)
 			}
 		}
-	} else if options[0] == "region" && len(options) == 4 {
-		cornerRadius := *IntVal(options[1:])
-		rotation := *IntVal(options[2:])
-		regionParts := strings.Split(options[3], ",")
+	} else if options[0] == "region" && len(options) == 5 {
+		cornerRadius := *IntVal(options[2:])
+		rotation := *IntVal(options[3:])
+		regionParts := strings.Split(options[4], ",")
 
 		if len(regionParts) == 4 {
 			if redact.Regions == nil {

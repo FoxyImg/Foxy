@@ -39,7 +39,7 @@ type ImageParams struct {
 	SourceCrop *SourceCropParams `json:"sourceCrop,omitempty"`
 
 	Rotation *RotationParams `json:"rotation,omitempty"`
-	Size     *SizingOptions  `json:"size,omitempty"`
+	Sizing   *SizingOptions  `json:"sizing,omitempty"`
 
 	Background *BackgroundOptions `json:"background,omitempty"`
 
@@ -55,9 +55,6 @@ type ImageParams struct {
 
 	Export *ExportOptions `json:"export,omitempty"`
 
-	FlipH *bool `json:"flipH,omitempty"`
-	FlipV *bool `json:"flipV,omitempty"`
-
 	Overlays Overlays `json:"overlays,omitempty"`
 }
 
@@ -69,7 +66,7 @@ func NewImageParams() *ImageParams {
 		Background:        &BackgroundOptions{},
 		Levels:            &LevelsParams{},
 		Rotation:          &RotationParams{},
-		Size:              &SizingOptions{},
+		Sizing:            &SizingOptions{},
 		Border:            &BorderOptions{},
 		Padding:           &PadOptions{},
 		Redact:            &RedactOptions{},
@@ -117,8 +114,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 	for _, part := range pathParts {
 		split := strings.Split(part, ":")
 
-		if slices.Contains(result.Size.Params(), split[0]) {
-			nv := result.Size.ParseParams(split[0], split[1:])
+		if slices.Contains(result.Sizing.Params(), split[0]) {
+			nv := result.Sizing.ParseParams(split[0], split[1:])
 			result.NeedsVision = result.NeedsVision || nv
 		} else if slices.Contains(result.BackgroundRemoval.Params(), split[0]) {
 			_ = result.BackgroundRemoval.ParseParams(split[0], split[1:])

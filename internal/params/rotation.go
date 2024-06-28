@@ -21,7 +21,7 @@ const (
 
 type RotationParams struct {
 	Rotation *float64         `json:"rotation,omitempty"`
-	SizeMode RotationSizeMode `json:"sizeMode,omitempty"`
+	SizeMode RotationSizeMode `json:"mode,omitempty"`
 }
 
 func (*RotationParams) Params() []string {

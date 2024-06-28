@@ -142,14 +142,14 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if imageParams.Debug != nil && !imageParams.Debug.DisableRenderCache {
-		cached, _ := storage.GetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(imageParams.Export.Format, "jpg"))
+		cached, _ := storage.GetCachedResult(sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"))
 		if cached != nil {
 			sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), cached)
 			return
 		}
 	}
 
-	img, err := storage.GetSourceImage(sourceConfig, sourceId, string(source), imageParams.Debug != nil && imageParams.Debug.DisableSourceCache)
+	img, err := storage.GetSourceImage(sourceConfig, sourceId, source, imageParams.Debug != nil && imageParams.Debug.DisableSourceCache)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
@@ -181,7 +181,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = storage.SetCachedResult(sourceId, string(source), parts[3:], utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
+	_ = storage.SetCachedResult(sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 
 	sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 }

@@ -15,7 +15,7 @@ type MaskParams struct {
 	Type         *string `json:"type,omitempty"`
 	CornerRadius *int    `json:"cornerRadius,omitempty"`
 	ImageKey     *string `json:"url,omitempty"`
-	Sizing       *string `json:"sizing,omitempty"`
+	Fit          *string `json:"fit,omitempty"`
 }
 
 func (*MaskParams) Params() []string {
@@ -44,7 +44,7 @@ func (opts *MaskParams) ParseParams(param string, options []string) (needsVision
 		if len(options) == 3 {
 			opts.Type = utils.Ptr("image")
 			opts.ImageKey = DecodeBase64StringVal(options[1:])
-			opts.Sizing = utils.Ptr(options[2])
+			opts.Fit = utils.Ptr(options[2])
 		}
 	}
 
@@ -115,7 +115,7 @@ func (opts *MaskParams) Process(sourceKey string, sourceId string, config *confi
 
 		hs := float64(sourceImage.Width()) / float64(maskImg.Width())
 		vs := float64(sourceImage.Height()) / float64(maskImg.Height())
-		if *opts.Sizing == "fit" {
+		if *opts.Fit == "fit" {
 			s := math.Min(hs, vs)
 			_ = maskImg.Resize(s, vips.KernelLanczos3)
 			_ = maskImg.EmbedBackgroundRGBA(
@@ -126,7 +126,7 @@ func (opts *MaskParams) Process(sourceKey string, sourceId string, config *confi
 				&vips.ColorRGBA{R: 0, G: 0, B: 0, A: 0},
 			)
 
-		} else if *opts.Sizing == "fill" {
+		} else if *opts.Fit == "fill" {
 			s := math.Max(hs, vs)
 			_ = maskImg.Resize(s, vips.KernelLanczos3)
 			_ = maskImg.Crop(
@@ -135,7 +135,7 @@ func (opts *MaskParams) Process(sourceKey string, sourceId string, config *confi
 				sourceImage.Width(),
 				sourceImage.Height(),
 			)
-		} else if *opts.Sizing == "stretch" {
+		} else if *opts.Fit == "stretch" {
 			if hs != 1.0 || vs != 1.0 {
 				_ = maskImg.ResizeWithVScale(hs, vs, vips.KernelLanczos3)
 			}

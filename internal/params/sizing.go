@@ -14,14 +14,18 @@ import (
 	"time"
 )
 
+const (
+	BoxSmallest int = -3
+	BoxLargest  int = -2
+	BoxAll      int = -1
+)
+
 type BoundingBoxCropParams struct {
 	Index    *int     `json:"index,omitempty"`
 	Padding  *int     `json:"padding,omitempty"`
 	Zoom     *float64 `json:"zoom,omitempty"`
 	HGravity *string  `json:"hGravity,omitempty"`
 	VGravity *string  `json:"vGravity,omitempty"`
-	Largest  *bool    `json:"largest,omitempty"`
-	Smallest *bool    `json:"smallest,omitempty"`
 	Focus    *bool    `json:"focus,omitempty"`
 }
 
@@ -41,7 +45,7 @@ type SizingOptions struct {
 	VGravity    *string                `json:"vGravity,omitempty"`
 	Face        *BoundingBoxCropParams `json:"face,omitempty"`
 	Person      *BoundingBoxCropParams `json:"person,omitempty"`
-	Interesting *vips.Interesting      `json:"interesting,omitempty"`
+	Interesting *vips.Interesting      `json:"smartMode,omitempty"`
 	FocalPoint  *FocalPointOptions     `json:"focalPoint,omitempty"`
 }
 
@@ -55,11 +59,12 @@ func (bbx *BoundingBoxCropParams) parseBoundingBoxCropParams(options []string) {
 	}
 
 	if options[0] == "index" && len(options) == 2 {
-		t := true
 		if options[1] == "largest" {
-			bbx.Largest = &t
+			bbx.Index = utils.Ptr(BoxLargest)
 		} else if options[1] == "smallest" {
-			bbx.Smallest = &t
+			bbx.Index = utils.Ptr(BoxSmallest)
+		} else if options[1] == "all" {
+			bbx.Index = utils.Ptr(-1)
 		} else {
 			f, err := strconv.Atoi(options[1])
 			if err == nil {
@@ -419,10 +424,10 @@ func (sz *SizingOptions) cropFace(cW *int, cH *int, imageMeta *vision.Metadata, 
 	}
 
 	var faceBounds geometry.Box
-	if sz.Face.Index != nil && *sz.Face.Index < len(imageMeta.Faces) {
+	if sz.Face.Index != nil && *sz.Face.Index > BoxAll && *sz.Face.Index < len(imageMeta.Faces) {
 		faceBounds = imageMeta.Faces[*sz.Face.Index].Box
 	} else {
-		if sz.Face.Largest != nil {
+		if sz.Face.Index != nil && *sz.Face.Index == BoxLargest {
 			area := 0.0
 			for _, face := range imageMeta.Faces {
 				faceArea := face.Box.Width * face.Box.Height
@@ -431,7 +436,7 @@ func (sz *SizingOptions) cropFace(cW *int, cH *int, imageMeta *vision.Metadata, 
 					area = faceArea
 				}
 			}
-		} else if sz.Face.Smallest != nil {
+		} else if sz.Face.Index != nil && *sz.Face.Index == BoxSmallest {
 			area := math.MaxFloat64
 			for _, face := range imageMeta.Faces {
 				faceArea := face.Box.Width * face.Box.Height
@@ -469,14 +474,14 @@ func (sz *SizingOptions) cropPerson(cW *int, cH *int, imageMeta *vision.Metadata
 	}
 
 	var personBounds geometry.Box
-	if sz.Person.Index != nil && *sz.Person.Index < len(imageMeta.People) {
+	if sz.Person.Index != nil && *sz.Person.Index > BoxAll && *sz.Person.Index < len(imageMeta.People) {
 		if imageMeta.People[*sz.Person.Index].Box == nil {
 			return sz.cropFill(cW, cH, params, sourceImage)
 		} else {
 			personBounds = *imageMeta.People[*sz.Person.Index].Box
 		}
 	} else {
-		if sz.Person.Largest != nil {
+		if sz.Person.Index != nil && *sz.Person.Index == BoxLargest {
 			area := 0.0
 			for _, person := range imageMeta.People {
 				if person.Box == nil {
@@ -489,7 +494,7 @@ func (sz *SizingOptions) cropPerson(cW *int, cH *int, imageMeta *vision.Metadata
 					area = personArea
 				}
 			}
-		} else if sz.Person.Smallest != nil {
+		} else if sz.Person.Index != nil && *sz.Person.Index == BoxSmallest {
 			area := math.MaxFloat64
 			for _, person := range imageMeta.People {
 				if person.Box == nil {

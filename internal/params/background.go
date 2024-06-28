@@ -3,9 +3,7 @@ package params
 import "foxy/internal/utils"
 
 type BackgroundOptions struct {
-	Color         *string `json:"color,omitempty"`
-	RemovalMethod *string `json:"removalMethod,omitempty"`
-	ImageKey      *string `json:"imageKey,omitempty"`
+	Color *string `json:"color,omitempty"`
 }
 
 func (opts *BackgroundOptions) Params() []string {

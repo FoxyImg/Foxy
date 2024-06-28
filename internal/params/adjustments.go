@@ -13,14 +13,12 @@ import (
 
 type AdjustmentsParams struct {
 	Order          *[]string `json:"order,omitempty"`
-	Blur           *int      `json:"blur,omitempty"`
-	Pixelate       *int      `json:"pixelate,omitempty"`
 	Brightness     *float64  `json:"brightness,omitempty"`
 	Saturation     *float64  `json:"saturation,omitempty"`
+	Hue            *float64  `json:"hue,omitempty"`
 	Contrast       *float64  `json:"contrast,omitempty"`
 	Exposure       *float64  `json:"exposure,omitempty"`
 	Gamma          *float64  `json:"gamma,omitempty"`
-	Hue            *float64  `json:"hue,omitempty"`
 	Vibrance       *float64  `json:"vibrance,omitempty"`
 	Invert         *bool     `json:"invert,omitempty"`
 	Texture        *float64  `json:"texture,omitempty"`

@@ -2,8 +2,8 @@
   "redact_test": {
     "version": 1,
     "params": {
-      "vision": true,
-      "size": {
+      "vision": false,
+      "sizing": {
         "crop": [
           "face"
         ],
@@ -18,26 +18,6 @@
         "blurMask": 9,
         "expandMask": 25,
         "pixelate": 18
-      },
-      "export": {
-        "format": "webp",
-        "quality": 85,
-        "reductionEffort": null,
-        "lossless": null,
-        "nearLossless": null
-      }
-    }
-  },
-  "square-512x512": {
-    "version": 1,
-    "params": {
-      "vision": false,
-      "size": {
-        "crop": [
-          "crop"
-        ],
-        "width": 512,
-        "height": 512
       },
       "export": {
         "format": "webp",

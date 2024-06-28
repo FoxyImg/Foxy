@@ -90,8 +90,8 @@ func ProcessImage(
 		_, _ = params.Debug.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 	}
 
-	if params.Size != nil {
-		sourceImage, err = params.Size.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
+	if params.Sizing != nil {
+		sourceImage, err = params.Sizing.Process(key, sourceId, sourceConfig, sourceImage, params, visionMeta)
 		if err != nil {
 			return nil, nil, err
 		}
