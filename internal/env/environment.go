@@ -1,6 +1,9 @@
 package env
 
-import "foxy/internal/utils"
+import (
+	"foxy/internal/utils"
+	"time"
+)
 
 type FoxyEnv struct {
 	Isolated bool
@@ -12,7 +15,10 @@ type FoxyEnv struct {
 	SourceConfigFile *string `env:"SOURCE_CONFIG"`
 	PresetsFile      *string `env:"PRESETS"`
 
-	Port string `env:"PORT"`
+	Port         string        `env:"PORT"`
+	IdleTimeout  time.Duration `env:"IDLE_TIMEOUT"`
+	ReadTimeout  time.Duration `env:"READ_TIMEOUT"`
+	WriteTimeout time.Duration `env:"WRITE_TIMEOUT"`
 
 	UseCache       bool    `env:"USE_CACHE"`
 	UseVisionCache bool    `env:"USE_VISION_CACHE"`
@@ -45,6 +51,9 @@ type FoxyEnv struct {
 var FoxyEnvironment = FoxyEnv{
 	ServerType:            "primary",
 	Port:                  "8080",
+	IdleTimeout:           60 * time.Second,
+	ReadTimeout:           1 * time.Second,
+	WriteTimeout:          10 * time.Second,
 	UseCache:              false,
 	UseVisionCache:        false,
 	UseRenderCache:        false,

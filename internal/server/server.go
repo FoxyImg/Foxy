@@ -14,8 +14,11 @@ func StartServer() {
 	routes.RegisterImageRoutes(mux)
 
 	server := &http.Server{
-		Addr:    ":" + env.FoxyEnvironment.Port,
-		Handler: mux,
+		Addr:         ":" + env.FoxyEnvironment.Port,
+		Handler:      mux,
+		ReadTimeout:  env.FoxyEnvironment.ReadTimeout,
+		WriteTimeout: env.FoxyEnvironment.WriteTimeout,
+		IdleTimeout:  env.FoxyEnvironment.IdleTimeout,
 	}
 
 	err := server.ListenAndServe()
