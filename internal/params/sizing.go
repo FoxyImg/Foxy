@@ -522,9 +522,9 @@ func (sz *SizingOptions) cropPerson(cW *int, cH *int, imageMeta *vision.Metadata
 		personBounds,
 		sz.Zoom,
 		sz.Person.Zoom,
-		utils.IfNil(sz.Face.Padding, 0),
-		utils.IfNil(sz.Face.HGravity, "center"),
-		utils.IfNil(sz.Face.VGravity, "center"),
+		utils.IfNil(sz.Person.Padding, 0),
+		utils.IfNil(sz.Person.HGravity, "center"),
+		utils.IfNil(sz.Person.VGravity, "center"),
 		params,
 		sourceImage,
 	)
