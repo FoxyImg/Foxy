@@ -2,7 +2,6 @@ package env
 
 import (
 	"foxy/internal/utils"
-	"time"
 )
 
 type FoxyEnv struct {
@@ -15,10 +14,10 @@ type FoxyEnv struct {
 	SourceConfigFile *string `env:"SOURCE_CONFIG"`
 	PresetsFile      *string `env:"PRESETS"`
 
-	Port         string        `env:"PORT"`
-	IdleTimeout  time.Duration `env:"IDLE_TIMEOUT"`
-	ReadTimeout  time.Duration `env:"READ_TIMEOUT"`
-	WriteTimeout time.Duration `env:"WRITE_TIMEOUT"`
+	Port         string `env:"PORT"`
+	IdleTimeout  *int   `env:"IDLE_TIMEOUT"`
+	ReadTimeout  *int   `env:"READ_TIMEOUT"`
+	WriteTimeout *int   `env:"WRITE_TIMEOUT"`
 
 	UseCache       bool    `env:"USE_CACHE"`
 	UseVisionCache bool    `env:"USE_VISION_CACHE"`
@@ -46,14 +45,17 @@ type FoxyEnv struct {
 	OnnxModelHumans     *string `env:"ONNX_MODEL_HUMANS"`
 	OnnxModelForeground *string `env:"ONNX_MODEL_FOREGROUND"`
 	OnnxUseCoreML       *bool   `env:"ONNX_USE_CORE_ML"`
+
+	UseRateLimiter  *bool `env:"USE_RATE_LIMITER"`
+	TokensPerMinute *int  `env:"TOKENS_PER_MINUTE"`
 }
 
 var FoxyEnvironment = FoxyEnv{
 	ServerType:            "primary",
 	Port:                  "8080",
-	IdleTimeout:           60 * time.Second,
-	ReadTimeout:           1 * time.Second,
-	WriteTimeout:          10 * time.Second,
+	IdleTimeout:           utils.Ptr(60),
+	ReadTimeout:           utils.Ptr(1),
+	WriteTimeout:          utils.Ptr(10),
 	UseCache:              false,
 	UseVisionCache:        false,
 	UseRenderCache:        false,
@@ -64,6 +66,8 @@ var FoxyEnvironment = FoxyEnv{
 	DebugImages:           utils.Ptr(false),
 	UseML:                 utils.Ptr(false),
 	OnnxUseCoreML:         utils.Ptr(false),
+	UseRateLimiter:        utils.Ptr(false),
+	TokensPerMinute:       utils.Ptr(30),
 }
 
 func Boot() {

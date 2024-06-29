@@ -9,15 +9,21 @@ import (
 	"foxy/internal/params"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
+	"github.com/sethvargo/go-limiter/httplimit"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 )
 
-func RegisterImageRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /{accessKey}/{source}/{params...}", GetImageHandler)
-	mux.HandleFunc("GET /{accessKey}/{source}", GetImageHandler)
+func RegisterImageRoutes(mux *http.ServeMux, httpLimiter *httplimit.Middleware) {
+	if httpLimiter != nil {
+		mux.Handle("GET /{accessKey}/{source}/{params...}", httpLimiter.Handle(http.HandlerFunc(GetImageHandler)))
+		mux.Handle("GET /{accessKey}/{source}", httpLimiter.Handle(http.HandlerFunc(GetImageHandler)))
+	} else {
+		mux.HandleFunc("GET /{accessKey}/{source}/{params...}", GetImageHandler)
+		mux.HandleFunc("GET /{accessKey}/{source}", GetImageHandler)
+	}
 }
 
 func sendImageResult(w http.ResponseWriter, format string, buffer *[]byte) {
