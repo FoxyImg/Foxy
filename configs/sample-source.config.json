@@ -45,11 +45,7 @@
       "type": "web"
     },
     "vision": {
-      "type": "rekognition",
-      "key": "key",
-      "bucket": "bucket",
-      "region": "us-east-1",
-      "secret": "secret",
+      "type": "google",
       "enabled": true,
       "useSourceCredentials": false
     },

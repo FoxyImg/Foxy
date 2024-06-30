@@ -1,0 +1,19 @@
+{
+  "local": {
+    "secret": "rapscallion",
+    "source": {
+      "path": "./sample-images/source",
+      "type": "local"
+    },
+    "vision": {
+      "type": "google",
+      "enabled": true,
+      "useSourceCredentials": false
+    },
+    "imgixMode": true,
+    "keys": {
+      "photoroom": "your_api_key",
+      "clipdrop": "your_api_key"
+    }
+  }
+}

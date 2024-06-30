@@ -1,0 +1,8 @@
+name: foxy-img-proxy-demo
+services:
+    foxy:
+        build:
+            context: ../..
+            dockerfile: Dockerfile-Demo
+        ports:
+            - "8080:8080"
