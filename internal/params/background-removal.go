@@ -4,13 +4,18 @@ import (
 	"foxy/internal/apis/clipdrop"
 	"foxy/internal/apis/photoroom"
 	"foxy/internal/config"
+	"foxy/internal/env"
 	"foxy/internal/onnx"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
 	"foxy/internal/vision"
+	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
 	"math"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type BackgroundRemovalParams struct {
@@ -45,6 +50,60 @@ func (opts *BackgroundRemovalParams) ParseParams(param string, options []string)
 	return
 }
 
+func getMLBackgroundMask(foreground bool, config *config.Config, sourceId string, key string, sourceImage *vips.ImageRef) (*vips.ImageRef, error) {
+	sourceFilePath := "/" + sourceId + "/" + strings.TrimLeft(key, "/")
+	if foreground {
+		sourceFilePath += ".foreground.png"
+	} else {
+		sourceFilePath += ".human.png"
+	}
+
+	sourceFileName, err := securejoin.SecureJoin(strings.TrimRight(*env.FoxyEnvironment.CacheDir, "/"), sourceFilePath)
+	if err != nil {
+		return nil, err
+	}
+	_, err = os.Stat(sourceFileName)
+	if err == nil {
+		log.Println("Mask cache hit")
+		maskImg, maskImgErr := vips.NewImageFromFile(sourceFileName)
+		if maskImgErr != nil {
+			log.Println("Read File Error:", err)
+			return nil, err
+		}
+
+		return maskImg, nil
+	}
+
+	var maskImg *vips.ImageRef
+	if foreground {
+		maskImg, err = onnx.GenericBackgroundRemoval.ProcessImage(sourceImage)
+	} else {
+		maskImg, err = onnx.HumanBackgroundRemoval.ProcessImage(sourceImage)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	pngData, _, err := maskImg.ExportPng(nil)
+	if err != nil {
+		return maskImg, err
+	}
+
+	sourcePath := filepath.Dir(sourceFileName)
+	err = os.MkdirAll(sourcePath, os.ModePerm)
+	if err != nil {
+		log.Println("MkdirAll Error:", err)
+		return maskImg, err
+	}
+
+	err = os.WriteFile(sourceFileName, pngData, os.ModePerm)
+	if err != nil {
+		return maskImg, err
+	}
+
+	return maskImg, nil
+}
+
 func (opts *BackgroundRemovalParams) Process(sourceKey string, sourceId string, config *config.Config, sourceImage *vips.ImageRef, params *ImageParams, imageMeta *vision.Metadata) (*vips.ImageRef, error) {
 	if opts.Mode == nil || opts.Enabled == nil || !*opts.Enabled {
 		return sourceImage, nil
@@ -63,12 +122,12 @@ func (opts *BackgroundRemovalParams) Process(sourceKey string, sourceId string, 
 			return sourceImage, err
 		}
 	} else if *opts.Mode == "fg" {
-		maskImg, err = onnx.GenericBackgroundRemoval.ProcessImage(sourceImage)
+		maskImg, err = getMLBackgroundMask(true, config, sourceId, sourceKey, sourceImage)
 		if err != nil {
 			return sourceImage, err
 		}
 	} else if *opts.Mode == "person" {
-		maskImg, err = onnx.HumanBackgroundRemoval.ProcessImage(sourceImage)
+		maskImg, err = getMLBackgroundMask(false, config, sourceId, sourceKey, sourceImage)
 		if err != nil {
 			return sourceImage, err
 		}
@@ -83,6 +142,7 @@ func (opts *BackgroundRemovalParams) Process(sourceKey string, sourceId string, 
 	}
 
 	_ = sourceImage.BandJoin(maskImg)
+	maskImg.Close()
 
 	if opts.BackgroundImageKey != nil && *opts.BackgroundImageKey != "" {
 		oimg, err := storage.GetSourceImage(config, sourceId, *opts.BackgroundImageKey, params.Debug.DisableSourceCache)
@@ -112,7 +172,7 @@ func (opts *BackgroundRemovalParams) Process(sourceKey string, sourceId string, 
 		}
 
 		_ = oimg.Composite(sourceImage, vips.BlendModeOver, 0, 0)
-		sourceImage = oimg
+		return oimg, nil
 	} else if opts.BackgroundColor != nil && *opts.BackgroundColor != "" {
 		backgroundColor, bgColorErr := ParseHexColor(utils.IfNil(opts.BackgroundColor, "00000000"))
 		if bgColorErr == nil {
@@ -123,7 +183,7 @@ func (opts *BackgroundRemovalParams) Process(sourceKey string, sourceId string, 
 
 			_ = colorCopy.Linear([]float64{0, 0, 0, 0}, []float64{float64(backgroundColor.R), float64(backgroundColor.G), float64(backgroundColor.B), float64(backgroundColor.A)})
 			_ = colorCopy.Composite(sourceImage, vips.BlendModeOver, 0, 0)
-			sourceImage = colorCopy
+			return colorCopy, nil
 		}
 	}
 

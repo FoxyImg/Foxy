@@ -249,6 +249,7 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 
 	var redactedScale = 1.0
 	redactedParts, err := sourceImage.Copy()
+	defer redactedParts.Close()
 	if err != nil {
 		return sourceImage, err
 	}
@@ -343,6 +344,7 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 	if err != nil {
 		return sourceImage, err
 	}
+	defer svg.Close()
 
 	_ = DumpDebugImage("redacted", svg)
 
@@ -358,8 +360,10 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 			if err != nil {
 				return nil, err
 			}
+			colorMask.Close()
 
 			colorMask, err = vips.NewImageFromBuffer(colorMaskPng)
+			defer colorMask.Close()
 			if err != nil {
 				return nil, err
 			}
@@ -372,8 +376,10 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 			if err != nil {
 				return nil, err
 			}
+			colorMask.Close()
 
 			colorMask, err = vips.NewImageFromBuffer(colorMaskPng)
+			defer colorMask.Close()
 			if err != nil {
 				return nil, err
 			}
@@ -383,6 +389,8 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 			_ = colorMask.Resize(1.0/redactedScale, vips.KernelLanczos3)
 		}
 
+		defer colorMask.Close()
+
 		_ = sourceImage.Composite(colorMask, vips.BlendModeOver, 0, 0)
 	} else if utils.IfNil(redact.Blur, 0) > 0 || utils.IfNil(redact.Pixelate, 0) > 0 {
 		if utils.IfNil(redact.UseColor, false) {
@@ -390,8 +398,8 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 			if err != nil {
 				return sourceImage, err
 			}
-
 			_ = redactedParts.Composite(overlaySvg, vips.BlendModeOver, 0, 0)
+			overlaySvg.Close()
 		}
 
 		alpha, err := svg.ExtractBandToImage(3, 1)
@@ -428,6 +436,7 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 				if err != nil {
 					return nil, err
 				}
+				defer redactedParts.Close()
 			}
 		}
 
@@ -439,6 +448,7 @@ func (redact *RedactOptions) Process(sourceKey string, sourceId string, config *
 				if err != nil {
 					return nil, err
 				}
+				defer alpha.Close()
 			}
 		}
 
