@@ -1,0 +1,37 @@
+name: foxy-static-files
+networks:
+  foxy_network:
+    driver: bridge
+services:
+  static_files:
+    image: flashspys/nginx-static
+    container_name: static_files
+    ports:
+      - 8081:80
+    volumes:
+      - /Volumes/Projects/Archive/Images:/static
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+  static_files2:
+    image: flashspys/nginx-static
+    container_name: static_files2
+    ports:
+      - 8082:80
+    volumes:
+      - /Volumes/Projects/Support/Media/Images/:/static
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+  static_files3:
+    image: flashspys/nginx-static
+    container_name: static_files3
+    ports:
+      - 8083:80
+    volumes:
+      - /Volumes/Projects/Archive/Plex/Stuff/:/static
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+  static_files4:
+    image: flashspys/nginx-static
+    container_name: static_files4
+    ports:
+      - 8084:80
+    volumes:
+      - /Volumes/Projects/Samples/Foxy:/static
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
