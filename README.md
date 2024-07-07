@@ -1,5 +1,7 @@
+![Foxy Image Logo](https://aspekt-media.b-cdn.net/logo.png)
+
 # Foxy
-An image processing service.  Similar to [ImgProxy](https://github.com/imgproxy/imgproxy) but open source.
+An image processing service.  Similar to [ImgProxy](https://github.com/imgproxy/imgproxy), imgix and others.
 
 This is very much a work in progress.  Don't use in production yet.
 
@@ -12,6 +14,11 @@ This is very much a work in progress.  Don't use in production yet.
 - Watermarking
 - Export to PNG, WebP, AVIF, or JPEG
 - Supports AWS S3, web and local filesystem as sources
+
+## Related Packages
+
+- [@foxyimg/url-builder]() TypeScript/JavaScript SDK for building Foxy URLs
+- [@foxyimg/vue-ui]() Vue 3 components for building editing interfaces for Foxy.
 
 ## Running Foxy
 
