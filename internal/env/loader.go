@@ -38,6 +38,16 @@ func LoadEnvironment(config interface{}) {
 
 					v.FieldByName(field.Name).SetInt(int64(envIntVal))
 				}
+			case "*int":
+				envVal := os.Getenv(envKey)
+				if envVal != "" {
+					envIntVal, intErr := strconv.Atoi(envVal)
+					if intErr != nil {
+						log.Fatal("Error parsing int env var", intErr)
+					}
+
+					v.FieldByName(field.Name).Set(ptr(reflect.ValueOf(envIntVal)))
+				}
 			case "string":
 				envVal := os.Getenv(envKey)
 				if envVal == "" && v.Field(i).String() == "" {

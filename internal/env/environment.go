@@ -2,6 +2,7 @@ package env
 
 import (
 	"foxy/internal/utils"
+	"log"
 )
 
 type FoxyEnv struct {
@@ -14,10 +15,11 @@ type FoxyEnv struct {
 	SourceConfigFile *string `env:"SOURCE_CONFIG"`
 	PresetsFile      *string `env:"PRESETS"`
 
-	Port         string `env:"PORT"`
-	IdleTimeout  *int   `env:"IDLE_TIMEOUT"`
-	ReadTimeout  *int   `env:"READ_TIMEOUT"`
-	WriteTimeout *int   `env:"WRITE_TIMEOUT"`
+	Port           string `env:"PORT"`
+	IdleTimeout    *int   `env:"IDLE_TIMEOUT"`
+	ReadTimeout    *int   `env:"READ_TIMEOUT"`
+	WriteTimeout   *int   `env:"WRITE_TIMEOUT"`
+	MaxConnections *int   `env:"MAX_CONNECTIONS"`
 
 	UseCache       bool    `env:"USE_CACHE"`
 	UseVisionCache bool    `env:"USE_VISION_CACHE"`
@@ -48,6 +50,9 @@ type FoxyEnv struct {
 
 	UseRateLimiter  *bool `env:"USE_RATE_LIMITER"`
 	TokensPerMinute *int  `env:"TOKENS_PER_MINUTE"`
+
+	Concurrency *int `env:"CONCURRENCY"`
+	MaxBurst    *int `env:"MAX_BURST"`
 }
 
 var FoxyEnvironment = FoxyEnv{
@@ -68,6 +73,9 @@ var FoxyEnvironment = FoxyEnv{
 	OnnxUseCoreML:         utils.Ptr(false),
 	UseRateLimiter:        utils.Ptr(false),
 	TokensPerMinute:       utils.Ptr(30),
+	MaxConnections:        utils.Ptr(0),
+	Concurrency:           utils.Ptr(0),
+	MaxBurst:              utils.Ptr(100),
 }
 
 func Boot() {
@@ -76,4 +84,27 @@ func Boot() {
 	if FoxyEnvironment.Isolated {
 		FoxyEnvironment.DatabaseUrl = nil
 	}
+
+	log.Printf("ServerType: %s", FoxyEnvironment.ServerType)
+	log.Printf("SourceConfigFile: %s", *FoxyEnvironment.SourceConfigFile)
+	log.Printf("PresetsFile: %s", *FoxyEnvironment.PresetsFile)
+	log.Printf("Port: %s", FoxyEnvironment.Port)
+	log.Printf("IdleTimeout: %d", *FoxyEnvironment.IdleTimeout)
+	log.Printf("ReadTimeout: %d", *FoxyEnvironment.ReadTimeout)
+	log.Printf("WriteTimeout: %d", *FoxyEnvironment.WriteTimeout)
+	log.Printf("MaxConnections: %d", *FoxyEnvironment.MaxConnections)
+	log.Printf("UseCache: %t", FoxyEnvironment.UseCache)
+	log.Printf("UseVisionCache: %t", FoxyEnvironment.UseVisionCache)
+	log.Printf("UseRenderCache: %t", FoxyEnvironment.UseRenderCache)
+	log.Printf("UseSourceConfigCache: %t", FoxyEnvironment.UseSourceConfigCache)
+	log.Printf("AllowPresetManagement: %t", FoxyEnvironment.AllowPresetManagement)
+	log.Printf("MaxSourceSize: %d", FoxyEnvironment.MaxSourceSize)
+	log.Printf("AlwaysPrerender: %t", FoxyEnvironment.AlwaysPrerender)
+	log.Printf("DebugImages: %t", *FoxyEnvironment.DebugImages)
+	log.Printf("UseML: %t", *FoxyEnvironment.UseML)
+	log.Printf("OnnxUseCoreML: %t", *FoxyEnvironment.OnnxUseCoreML)
+	log.Printf("UseRateLimiter: %t", *FoxyEnvironment.UseRateLimiter)
+	log.Printf("TokensPerMinute: %d", *FoxyEnvironment.TokensPerMinute)
+	log.Printf("Concurrency: %d", *FoxyEnvironment.Concurrency)
+	log.Printf("MaxBurst: %d", *FoxyEnvironment.MaxBurst)
 }

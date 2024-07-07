@@ -8,7 +8,6 @@ import (
 	"foxy/internal/env"
 	"foxy/internal/server/middleware"
 	"github.com/jackc/pgx/v5"
-	"github.com/sethvargo/go-limiter/httplimit"
 	"log"
 	"net/http"
 )
@@ -20,7 +19,7 @@ type sourceInfo struct {
 	SampleImages []string `json:"sampleImages"`
 }
 
-func RegisterSourceRoutes(mux *http.ServeMux, httpLimiter *httplimit.Middleware) {
+func RegisterSourceRoutes(mux *http.ServeMux) {
 	mux.Handle("OPTIONS /sources/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
 
 	mux.Handle("GET /sources/{appId}", middleware.VerifyAuth(

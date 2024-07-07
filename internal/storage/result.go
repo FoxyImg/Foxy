@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func GetCachedResult(sid string, key string, params any, format string) (*[]byte, error) {
+func GetCachedResult(sid string, key string, params any, format string) (*string, error) {
 	if !env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil {
 		log.Println("Render cache is disabled")
 		return nil, nil
@@ -34,13 +34,7 @@ func GetCachedResult(sid string, key string, params any, format string) (*[]byte
 	_, err = os.Stat(hashedFileName)
 	if err == nil {
 		log.Println("Render cache hit")
-		data, err := os.ReadFile(hashedFileName)
-		if err != nil {
-			log.Println("Read File Error:", err)
-			return nil, err
-		}
-
-		return &data, nil
+		return &hashedFileName, nil
 	}
 
 	return nil, nil

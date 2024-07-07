@@ -9,17 +9,17 @@ import (
 	"foxy/internal/params"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
-	"github.com/sethvargo/go-limiter/httplimit"
+	"github.com/throttled/throttled/v2"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 )
 
-func RegisterImageRoutes(mux *http.ServeMux, httpLimiter *httplimit.Middleware) {
-	if httpLimiter != nil {
-		mux.Handle("GET /{accessKey}/{source}/{params...}", httpLimiter.Handle(http.HandlerFunc(GetImageHandler)))
-		mux.Handle("GET /{accessKey}/{source}", httpLimiter.Handle(http.HandlerFunc(GetImageHandler)))
+func RegisterImageRoutes(mux *http.ServeMux, httpRateLimiter *throttled.HTTPRateLimiterCtx) {
+	if httpRateLimiter != nil {
+		mux.Handle("GET /{accessKey}/{source}/{params...}", httpRateLimiter.RateLimit(http.HandlerFunc(GetImageHandler)))
+		mux.Handle("GET /{accessKey}/{source}", httpRateLimiter.RateLimit(http.HandlerFunc(GetImageHandler)))
 	} else {
 		mux.HandleFunc("GET /{accessKey}/{source}/{params...}", GetImageHandler)
 		mux.HandleFunc("GET /{accessKey}/{source}", GetImageHandler)
@@ -150,7 +150,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	if imageParams.Debug != nil && !imageParams.Debug.DisableRenderCache {
 		cached, _ := storage.GetCachedResult(sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"))
 		if cached != nil {
-			sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), cached)
+			http.ServeFile(w, r, *cached)
 			return
 		}
 	}

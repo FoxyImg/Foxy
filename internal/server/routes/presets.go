@@ -9,7 +9,6 @@ import (
 	"foxy/internal/server/middleware"
 	"github.com/gosimple/slug"
 	"github.com/jackc/pgx/v5"
-	"github.com/sethvargo/go-limiter/httplimit"
 	"io"
 	"log"
 	"net/http"
@@ -18,7 +17,7 @@ import (
 	"sync"
 )
 
-func RegisterPresetRoutes(mux *http.ServeMux, httpLimiter *httplimit.Middleware) {
+func RegisterPresetRoutes(mux *http.ServeMux) {
 	mux.Handle("OPTIONS /presets/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
 	mux.Handle("OPTIONS /presets/{appId}/{presetName}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
 

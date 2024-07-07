@@ -27,7 +27,7 @@ type Rect struct {
 }
 
 type ImageParams struct {
-	Debug *DebugOptions `json:"-"`
+	Debug *DebugOptions `json:"debug,omitempty"`
 
 	MetaOnly    bool `json:"-"`
 	NeedsVision bool `json:"vision"`
