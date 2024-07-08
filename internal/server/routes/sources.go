@@ -7,6 +7,7 @@ import (
 	"foxy/internal/db"
 	"foxy/internal/env"
 	"foxy/internal/server/middleware"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"log"
 	"net/http"
@@ -19,14 +20,17 @@ type sourceInfo struct {
 	SampleImages []string `json:"sampleImages"`
 }
 
-func RegisterSourceRoutes(mux *http.ServeMux) {
-	mux.Handle("OPTIONS /sources/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+func RegisterSourceRoutes(router chi.Router) {
+	router.Group(func(router chi.Router) {
+		router.Use(middleware.CorsHeaders)
+		router.Use(middleware.VerifyAuth)
 
-	mux.Handle("GET /sources/{appId}", middleware.VerifyAuth(
-		middleware.CorsHeaders(
-			http.HandlerFunc(GetSourcesHandler),
-		),
-	))
+		router.Options("/sources/{appId}", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		router.Get("/sources/{appId}", GetSourcesHandler)
+	})
 }
 
 func GetSourcesHandler(w http.ResponseWriter, r *http.Request) {

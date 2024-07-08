@@ -7,6 +7,7 @@ import (
 	"foxy/internal/env"
 	"foxy/internal/params"
 	"foxy/internal/server/middleware"
+	"github.com/go-chi/chi/v5"
 	"github.com/gosimple/slug"
 	"github.com/jackc/pgx/v5"
 	"io"
@@ -17,57 +18,35 @@ import (
 	"sync"
 )
 
-func RegisterPresetRoutes(mux *http.ServeMux) {
-	mux.Handle("OPTIONS /presets/{appId}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
-	mux.Handle("OPTIONS /presets/{appId}/{presetName}", middleware.CorsHeaders(middleware.CorsDefaultHandler()))
+func RegisterPresetRoutes(router chi.Router) {
+	router.Group(func(router chi.Router) {
+		router.Use(middleware.CorsHeaders)
+		router.Use(middleware.VerifyAuth)
 
-	mux.Handle("GET /presets/{appId}", middleware.VerifyAuth(
-		middleware.CorsHeaders(
-			http.HandlerFunc(GetPresetsHandler),
-		),
-	))
+		router.Options("/presets/{appId}", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
 
-	if !env.FoxyEnvironment.AllowPresetManagement {
-		return
-	}
+		router.Options("/presets/{appId}/{presetName}", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
 
-	if env.FoxyEnvironment.Isolated {
-		mux.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
-			middleware.CorsHeaders(
-				http.HandlerFunc(PostNewIsolatedPresetHandler),
-			),
-		))
+		router.Get("/presets/{appId}", GetPresetsHandler)
 
-		mux.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
-			middleware.CorsHeaders(
-				http.HandlerFunc(PostNewIsolatedPresetHandler),
-			),
-		))
+		if !env.FoxyEnvironment.AllowPresetManagement {
+			return
+		}
 
-		mux.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
-			middleware.CorsHeaders(
-				http.HandlerFunc(DeleteIsolatedPresetHandler),
-			),
-		))
-	} else {
-		mux.Handle("POST /presets/{appId}/{presetName}", middleware.VerifyAuth(
-			middleware.CorsHeaders(
-				http.HandlerFunc(PostNewPresetHandler),
-			),
-		))
-
-		mux.Handle("PUT /presets/{appId}/{presetName}", middleware.VerifyAuth(
-			middleware.CorsHeaders(
-				http.HandlerFunc(PutUpdatePresetHandler),
-			),
-		))
-
-		mux.Handle("DELETE /presets/{appId}/{presetName}", middleware.VerifyAuth(
-			middleware.CorsHeaders(
-				http.HandlerFunc(DeletePresetHandler),
-			),
-		))
-	}
+		if env.FoxyEnvironment.Isolated {
+			router.Post("/presets/{appId}/{presetName}", PostNewIsolatedPresetHandler)
+			router.Put("/presets/{appId}/{presetName}", PostNewIsolatedPresetHandler)
+			router.Delete("/presets/{appId}/{presetName}", DeleteIsolatedPresetHandler)
+		} else {
+			router.Post("/presets/{appId}/{presetName}", PostNewPresetHandler)
+			router.Put("/presets/{appId}/{presetName}", PutUpdatePresetHandler)
+			router.Delete("/presets/{appId}/{presetName}", DeletePresetHandler)
+		}
+	})
 }
 
 func GetPresetsHandler(w http.ResponseWriter, r *http.Request) {

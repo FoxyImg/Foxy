@@ -3,6 +3,7 @@ package env
 import (
 	"foxy/internal/utils"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -56,6 +57,8 @@ type FoxyEnv struct {
 	MaxBurst    *int `env:"MAX_BURST"`
 
 	CacheTTL *time.Duration `env:"CACHE_TTL"`
+
+	AllowedOrigins *[]string `env:"ALLOWED_ORIGINS"`
 }
 
 var FoxyEnvironment = FoxyEnv{
@@ -80,6 +83,7 @@ var FoxyEnvironment = FoxyEnv{
 	Concurrency:           utils.Ptr(0),
 	MaxBurst:              utils.Ptr(100),
 	CacheTTL:              utils.Ptr(0 * time.Second),
+	AllowedOrigins:        utils.Ptr([]string{}),
 }
 
 func Boot() {
@@ -111,5 +115,6 @@ func Boot() {
 	log.Printf("TokensPerMinute: %d", *FoxyEnvironment.TokensPerMinute)
 	log.Printf("Concurrency: %d", *FoxyEnvironment.Concurrency)
 	log.Printf("MaxBurst: %d", *FoxyEnvironment.MaxBurst)
-	log.Printf("CacheTTL: %d", FoxyEnvironment.CacheTTL.String())
+	log.Printf("CacheTTL: %s", FoxyEnvironment.CacheTTL.String())
+	log.Printf("AllowedOrigins: %s", strings.Join(*FoxyEnvironment.AllowedOrigins, ", "))
 }

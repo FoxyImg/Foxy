@@ -12,6 +12,11 @@ import (
 
 func VerifyAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		log.Println("Verify auth middleware", r.Method, r.URL.Path)
 		appId := r.PathValue("appId")
 		if appId == "" {

@@ -7,10 +7,17 @@ require (
 	github.com/aws/aws-sdk-go v1.53.10
 	github.com/cyphar/filepath-securejoin v0.2.5
 	github.com/davidbyttow/govips/v2 v2.15.0
+	github.com/go-chi/chi/v5 v5.1.0
 	github.com/gosimple/slug v1.14.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/joho/godotenv v1.5.1
+	github.com/lucasb-eyer/go-colorful v1.2.0
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/redis/go-redis/v9 v9.5.1
+	github.com/throttled/throttled/v2 v2.12.0
+	github.com/xhit/go-str2duration/v2 v2.1.0
+	github.com/yalue/onnxruntime_go v1.10.0
+	golang.org/x/net v0.23.0
 	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
 )
 
@@ -29,16 +36,9 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
-	github.com/sethvargo/go-limiter v1.0.0 // indirect
-	github.com/throttled/throttled/v2 v2.12.0 // indirect
-	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	github.com/yalue/onnxruntime_go v1.10.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/image v0.10.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect

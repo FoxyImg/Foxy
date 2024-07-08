@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 func ptr(v reflect.Value) reflect.Value {
@@ -26,7 +27,7 @@ func LoadEnvironment(config interface{}) {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Type().Field(i)
 
-		//log.Printf("Var: %s Type: %s", field.Name, field.Type.String())
+		log.Printf("Var: %s Type: %s", field.Name, field.Type.String())
 
 		envKey := field.Tag.Get("env")
 		if envKey != "" {
@@ -89,6 +90,17 @@ func LoadEnvironment(config interface{}) {
 					}
 
 					v.FieldByName(field.Name).Set(ptr(reflect.ValueOf(dur)))
+				}
+
+			case "*[]string":
+				envVal := os.Getenv(envKey)
+				if envVal != "" {
+					slc := strings.Split(envVal, ",")
+					for i := range slc {
+						slc[i] = strings.TrimSpace(slc[i])
+					}
+
+					v.FieldByName(field.Name).Set(ptr(reflect.ValueOf(slc)))
 				}
 			}
 		}

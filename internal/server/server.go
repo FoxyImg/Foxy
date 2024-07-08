@@ -5,6 +5,7 @@ import (
 	"errors"
 	"foxy/internal/env"
 	"foxy/internal/server/routes"
+	"github.com/go-chi/chi/v5"
 	"github.com/throttled/throttled/v2"
 	"github.com/throttled/throttled/v2/store/memstore"
 	"golang.org/x/net/netutil"
@@ -12,24 +13,49 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"net/url"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 	"time"
 )
 
 func StartDebugServer() {
-	mux := http.NewServeMux()
+	router := http.NewServeMux()
 
-	mux.HandleFunc("/debug/pprof/", pprof.Index)
-	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	router.HandleFunc("/debug/pprof/", pprof.Index)
+	router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	router.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	router.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	go func() {
-		_ = http.ListenAndServe(":8086", mux)
+		_ = http.ListenAndServe(":8086", router)
 	}()
+}
+
+func originMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		refererUrl := r.Header.Get("Referer")
+		if refererUrl == "" {
+			http.Error(w, "Not Allowed", http.StatusForbidden)
+			return
+		}
+
+		parsedUrl, err := url.Parse(refererUrl)
+		if err != nil {
+			http.Error(w, "Not Allowed", http.StatusForbidden)
+			return
+		}
+
+		if !slices.Contains(*env.FoxyEnvironment.AllowedOrigins, parsedUrl.Host) {
+			http.Error(w, "Not Allowed", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func StartServer() {
@@ -51,19 +77,29 @@ func StartServer() {
 
 		httpRateLimiter = &throttled.HTTPRateLimiterCtx{
 			RateLimiter: rateLimiter,
-			VaryBy:      &throttled.VaryBy{Path: true},
+			VaryBy: &throttled.VaryBy{
+				Path: true,
+			},
 		}
 	}
 
-	mux := http.NewServeMux()
+	router := chi.NewRouter()
 
-	routes.RegisterSourceRoutes(mux)
-	routes.RegisterPresetRoutes(mux)
-	routes.RegisterImageRoutes(mux, httpRateLimiter)
+	if len(*env.FoxyEnvironment.AllowedOrigins) > 0 {
+		router.Use(originMiddleware)
+	}
+
+	if httpRateLimiter != nil {
+		router.Use(httpRateLimiter.RateLimit)
+	}
+
+	routes.RegisterSourceRoutes(router)
+	routes.RegisterPresetRoutes(router)
+	routes.RegisterImageRoutes(router)
 
 	server := &http.Server{
 		Addr:         ":" + env.FoxyEnvironment.Port,
-		Handler:      mux,
+		Handler:      router,
 		ReadTimeout:  time.Duration(*env.FoxyEnvironment.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(*env.FoxyEnvironment.WriteTimeout) * time.Second,
 		//IdleTimeout:  time.Duration(*env.FoxyEnvironment.IdleTimeout) * time.Second,

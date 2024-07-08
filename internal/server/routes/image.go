@@ -9,21 +9,16 @@ import (
 	"foxy/internal/params"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
-	"github.com/throttled/throttled/v2"
+	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 )
 
-func RegisterImageRoutes(mux *http.ServeMux, httpRateLimiter *throttled.HTTPRateLimiterCtx) {
-	if httpRateLimiter != nil {
-		mux.Handle("GET /{accessKey}/{source}/{params...}", httpRateLimiter.RateLimit(http.HandlerFunc(GetImageHandler)))
-		mux.Handle("GET /{accessKey}/{source}", httpRateLimiter.RateLimit(http.HandlerFunc(GetImageHandler)))
-	} else {
-		mux.HandleFunc("GET /{accessKey}/{source}/{params...}", GetImageHandler)
-		mux.HandleFunc("GET /{accessKey}/{source}", GetImageHandler)
-	}
+func RegisterImageRoutes(router chi.Router) {
+	router.Get("/{accessKey}/{source}/{params...}", GetImageHandler)
+	router.Get("/{accessKey}/{source}", GetImageHandler)
 }
 
 func sendImageResult(w http.ResponseWriter, format string, buffer *[]byte) {
