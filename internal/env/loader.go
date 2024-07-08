@@ -2,6 +2,7 @@ package env
 
 import (
 	"github.com/joho/godotenv"
+	"github.com/xhit/go-str2duration/v2"
 	"log"
 	"os"
 	"reflect"
@@ -24,6 +25,8 @@ func LoadEnvironment(config interface{}) {
 	v := reflect.ValueOf(config).Elem()
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Type().Field(i)
+
+		//log.Printf("Var: %s Type: %s", field.Name, field.Type.String())
 
 		envKey := field.Tag.Get("env")
 		if envKey != "" {
@@ -75,6 +78,17 @@ func LoadEnvironment(config interface{}) {
 				if envVal != "" {
 					boolVal := envVal == "true"
 					v.FieldByName(field.Name).Set(ptr(reflect.ValueOf(boolVal)))
+				}
+
+			case "*time.Duration":
+				envVal := os.Getenv(envKey)
+				if envVal != "" {
+					dur, err := str2duration.ParseDuration(envVal)
+					if err != nil {
+						log.Panicf("Error parsing duration: %s", err)
+					}
+
+					v.FieldByName(field.Name).Set(ptr(reflect.ValueOf(dur)))
 				}
 			}
 		}

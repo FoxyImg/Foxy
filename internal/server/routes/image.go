@@ -189,5 +189,13 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	_ = storage.SetCachedResult(sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 
+	if *env.FoxyEnvironment.CacheTTL > 0 {
+		expires := time.Now().Add(*env.FoxyEnvironment.CacheTTL)
+		w.Header().Add("Expires", strings.Replace(expires.Format(time.RFC1123), "UTC", "GMT", -1))
+		w.Header().Set("Cache-Control", fmt.Sprintf("public, s-maxage=%d, max-age=%d, no-transform", *env.FoxyEnvironment.CacheTTL, *env.FoxyEnvironment.CacheTTL))
+	} else {
+		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
+	}
+
 	sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 }
