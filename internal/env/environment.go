@@ -59,6 +59,9 @@ type FoxyEnv struct {
 	CacheTTL *time.Duration `env:"CACHE_TTL"`
 
 	AllowedOrigins *[]string `env:"ALLOWED_ORIGINS"`
+
+	FfmpegPath  *string `env:"FFMPEG_PATH"`
+	FfprobePath *string `env:"FFPROBE_PATH"`
 }
 
 var FoxyEnvironment = FoxyEnv{

@@ -56,6 +56,8 @@ type ImageParams struct {
 	Export *ExportOptions `json:"export,omitempty"`
 
 	Overlays Overlays `json:"overlays,omitempty"`
+
+	Video *VideoParams `json:"video,omitempty"`
 }
 
 func NewImageParams() *ImageParams {
@@ -79,6 +81,12 @@ func NewImageParams() *ImageParams {
 		Export: &ExportOptions{
 			Format:  utils.Ptr("webp"),
 			Quality: utils.Ptr(85),
+		},
+
+		Video: &VideoParams{
+			Type:      utils.Ptr("frame"),
+			FrameType: utils.Ptr("rel"),
+			Time:      utils.Ptr(0.5),
 		},
 	}
 }
@@ -117,6 +125,8 @@ func BuildParams(pathParts []string) (*ImageParams, error) {
 		if slices.Contains(result.Sizing.Params(), split[0]) {
 			nv := result.Sizing.ParseParams(split[0], split[1:])
 			result.NeedsVision = result.NeedsVision || nv
+		} else if slices.Contains(result.Video.Params(), split[0]) {
+			_ = result.Video.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.BackgroundRemoval.Params(), split[0]) {
 			_ = result.BackgroundRemoval.ParseParams(split[0], split[1:])
 		} else if slices.Contains(result.SourceCrop.Params(), split[0]) {

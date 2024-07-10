@@ -6,19 +6,34 @@ import (
 	"fmt"
 	"foxy/internal/config"
 	"foxy/internal/env"
+	"foxy/internal/ffmpeg"
 	"foxy/internal/params"
+	"foxy/internal/server/middleware"
 	"foxy/internal/storage"
 	"foxy/internal/utils"
+	"foxy/internal/vision"
+	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
 
 func RegisterImageRoutes(router chi.Router) {
-	router.Get("/{accessKey}/{source}/{params...}", GetImageHandler)
-	router.Get("/{accessKey}/{source}", GetImageHandler)
+	router.Group(func(router chi.Router) {
+		router.Use(middleware.CorsHeaders)
+
+		router.Options("/{accessKey}/{source}/{params...}", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+		router.Options("/{accessKey}/{source...}", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		router.Get("/{accessKey}/*", GetImageHandler)
+	})
 }
 
 func sendImageResult(w http.ResponseWriter, format string, buffer *[]byte) {
@@ -42,6 +57,8 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
+	ffmpegUtility := ffmpeg.NewFfmpeg(nil, nil)
+
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 2 {
 		w.WriteHeader(http.StatusNotFound)
@@ -61,6 +78,12 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	var source string
 	if imgixMode {
 		source = strings.Join(parts[2:], "/")
+		if strings.Contains(source, "%") {
+			unescape, unescapeErr := url.QueryUnescape(source)
+			if unescapeErr == nil {
+				source = unescape
+			}
+		}
 	} else {
 		for len(parts[2])%4 != 0 {
 			parts[2] += "="
@@ -73,6 +96,8 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 
 		source = string(sourceBytes)
 	}
+
+	isVideo := ffmpegUtility.IsVideo(source)
 
 	var checkSig = true
 	var imageParams *params.ImageParams
@@ -150,11 +175,21 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	img, err := storage.GetSourceImage(sourceConfig, sourceId, source, imageParams.Debug != nil && imageParams.Debug.DisableSourceCache)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
+	var img *vips.ImageRef
+	var videoMeta *vision.VideoMetadata
+	if isVideo {
+		var ffmeta *ffmpeg.Meta
+		ffmeta, source, img, err = imageParams.Video.ProcessFrame(source, sourceId, sourceConfig, nil, imageParams, nil)
+		if ffmeta != nil {
+			videoMeta = ffmeta.GetVideoMetadata()
+		}
+	} else {
+		img, err = storage.GetSourceImage(sourceConfig, sourceId, source, imageParams.Debug != nil && imageParams.Debug.DisableSourceCache)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
 	}
 
 	if img == nil {
@@ -167,6 +202,10 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
+	}
+
+	if meta != nil && videoMeta != nil {
+		meta.Video = videoMeta
 	}
 
 	if imageParams.MetaOnly {

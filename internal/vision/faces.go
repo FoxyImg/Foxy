@@ -66,6 +66,15 @@ type DominantColors struct {
 	Colors   []UsedColor `json:"colors"`
 }
 
+type VideoMetadata struct {
+	Width         int     `json:"width"`
+	Height        int     `json:"height"`
+	Duration      float64 `json:"duration"`
+	FPS           float64 `json:"fps"`
+	FrameCount    int     `json:"frameCount"`
+	KeyframeCount int     `json:"keyframeCount"`
+}
+
 type Metadata struct {
 	Width            int            `json:"width"`
 	Height           int            `json:"height"`
@@ -74,6 +83,7 @@ type Metadata struct {
 	People           []Label        `json:"people"`
 	ModerationLabels []Label        `json:"moderationLabels"`
 	DominantColors   DominantColors `json:"dominantColors"`
+	Video            *VideoMetadata `json:"video,omitempty"`
 }
 
 func cropLabels(labels []Label, sw, sh, x, y, width, height float64) []Label {
