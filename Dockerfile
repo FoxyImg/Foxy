@@ -7,7 +7,8 @@ RUN apt update \
     fontconfig \
     libde265-0 \
     libheif1 \
-    libvips
+    libvips \
+    ffmpeg
 
 
 ###
@@ -43,7 +44,9 @@ ENV CGO_LDFLAGS="-L/usr/local/lib/vips/lib"
 ENV GOOS=linux
 ENV GO111MODULE=on
 
-COPY . .
+COPY internal/ ./internal
+COPY main.go .
+
 RUN go build .
 
 ###
@@ -55,5 +58,19 @@ COPY --from=builder /app/foxy /foxy
 
 WORKDIR /
 
+RUN mkdir -p /cache/sources
+RUN mkdir -p /cache/renders
+RUN mkdir /models
+
+COPY libs/onnx/linux /libs/onnx/linux
+
+COPY models/u2net_human_seg.onnx /models/u2net_human_seg.onnx
+COPY models/u2net.onnx /models/u2net.onnx
+COPY models/yolov5s-face.onnx /models/yolov5s-face.onnx
+
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
+ENV FFPROBE_PATH=/usr/bin/ffprobe
+
 EXPOSE 8080
+
 CMD ["/foxy"]

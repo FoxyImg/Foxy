@@ -7,7 +7,8 @@ RUN apt update \
     fontconfig \
     libde265-0 \
     libheif1 \
-    libvips
+    libvips \
+    ffmpeg
 
 
 ###
@@ -74,6 +75,9 @@ COPY models/yolov5s-face.onnx /models/yolov5s-face.onnx
 COPY ./configs/demo.presets.json /presets.json
 COPY ./configs/demo.source.config.json /source.config.json
 COPY ./configs/demo.env /.env
+
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
+ENV FFPROBE_PATH=/usr/bin/ffprobe
 
 EXPOSE 8080
 
