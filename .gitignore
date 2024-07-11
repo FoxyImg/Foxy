@@ -20,3 +20,4 @@ sample-images/source-cache/*.jpg
 sample-images/source-cache/*.png
 sample-images/source-cache/*.json
 /fly.toml
+process-data/

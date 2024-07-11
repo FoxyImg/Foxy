@@ -71,6 +71,9 @@ COPY models/yolov5s-face.onnx /models/yolov5s-face.onnx
 ENV FFMPEG_PATH=/usr/bin/ffmpeg
 ENV FFPROBE_PATH=/usr/bin/ffprobe
 
+COPY ./server.sh /server.sh
+RUN chmod a+x /server.sh
+
 EXPOSE 8080
 
-CMD ["/foxy"]
+CMD ["/server.sh"]
