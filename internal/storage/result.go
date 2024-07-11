@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"foxy/internal/config"
 	"foxy/internal/env"
 	"log"
 	"os"
@@ -11,13 +12,19 @@ import (
 	"strings"
 )
 
-func GetCachedResult(sid string, key string, params any, format string) (*string, error) {
-	if !env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil {
+func GetCachedResult(sourceConfig *config.Config, sid string, key string, params any, format string) (*string, error) {
+	renderCacheDir := sourceConfig.RenderCache
+
+	if renderCacheDir == nil && (!env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil) {
 		log.Println("Render cache is disabled")
 		return nil, nil
 	}
 
-	sourceName := filepath.Base(strings.TrimSuffix(key, filepath.Ext(key)))
+	if renderCacheDir == nil {
+		renderCacheDir = env.FoxyEnvironment.RenderCacheDir
+	}
+
+	sourceName := strings.TrimSuffix(key, filepath.Ext(key))
 
 	var paramsJSON []byte
 	paramsJSON, err := json.Marshal(params)
@@ -30,7 +37,7 @@ func GetCachedResult(sid string, key string, params any, format string) (*string
 	hasher.Write(paramsJSON)
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
-	hashedFileName := strings.TrimRight(*env.FoxyEnvironment.RenderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
+	hashedFileName := strings.TrimRight(*renderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
 	_, err = os.Stat(hashedFileName)
 	if err == nil {
 		log.Println("Render cache hit")
@@ -40,13 +47,19 @@ func GetCachedResult(sid string, key string, params any, format string) (*string
 	return nil, nil
 }
 
-func SetCachedResult(sid string, key string, params any, format string, data *[]byte) error {
-	if !env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil {
+func SetCachedResult(sourceConfig *config.Config, sid string, key string, params any, format string, data *[]byte) error {
+	renderCacheDir := sourceConfig.RenderCache
+
+	if renderCacheDir == nil && (!env.FoxyEnvironment.UseRenderCache || env.FoxyEnvironment.RenderCacheDir == nil) {
 		log.Println("Render cache is disabled")
 		return nil
 	}
 
-	sourceName := filepath.Base(strings.TrimSuffix(key, filepath.Ext(key)))
+	if renderCacheDir == nil {
+		renderCacheDir = env.FoxyEnvironment.RenderCacheDir
+	}
+
+	sourceName := strings.TrimSuffix(key, filepath.Ext(key))
 
 	var paramsJSON []byte
 	paramsJSON, err := json.Marshal(params)
@@ -59,7 +72,7 @@ func SetCachedResult(sid string, key string, params any, format string, data *[]
 	hasher.Write(paramsJSON)
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
-	hashedFileName := strings.TrimRight(*env.FoxyEnvironment.RenderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
+	hashedFileName := strings.TrimRight(*renderCacheDir, "/") + "/" + sid + "/" + sourceName + "/" + hash + "." + format
 
 	hashedPath := filepath.Dir(hashedFileName)
 	err = os.MkdirAll(hashedPath, os.ModePerm)

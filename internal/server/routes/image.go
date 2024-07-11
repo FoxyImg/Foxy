@@ -168,7 +168,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if imageParams.Debug != nil && !imageParams.Debug.DisableRenderCache {
-		cached, _ := storage.GetCachedResult(sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"))
+		cached, _ := storage.GetCachedResult(sourceConfig, sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"))
 		if cached != nil {
 			http.ServeFile(w, r, *cached)
 			return
@@ -221,7 +221,8 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = storage.SetCachedResult(sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
+	log.Println("Set Cached Result", source)
+	_ = storage.SetCachedResult(sourceConfig, sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 
 	if *env.FoxyEnvironment.CacheTTL > 0 {
 		expires := time.Now().Add(*env.FoxyEnvironment.CacheTTL)

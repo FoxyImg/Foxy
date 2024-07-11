@@ -52,12 +52,13 @@ type VisionConfig struct {
 }
 
 type Config struct {
-	AppId     *string       `json:"appId"`
-	Secret    *string       `json:"secret"`
-	Source    *SourceConfig `json:"source"`
-	Vision    *VisionConfig `json:"vision"`
-	APIKeys   *APIKeys      `json:"keys"`
-	ImgixMode *bool         `json:"imgixMode"`
+	AppId       *string       `json:"appId"`
+	Secret      *string       `json:"secret"`
+	Source      *SourceConfig `json:"source"`
+	Vision      *VisionConfig `json:"vision"`
+	APIKeys     *APIKeys      `json:"keys"`
+	ImgixMode   *bool         `json:"imgixMode"`
+	RenderCache *string       `json:"renderCache"`
 }
 
 var LoadedSources *map[string]*Config = nil
