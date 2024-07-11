@@ -1,16 +1,21 @@
 package main
 
 import (
+	"foxy/internal/cli"
 	"foxy/internal/db"
 	"foxy/internal/env"
 	"foxy/internal/onnx"
 	"foxy/internal/params"
-	"foxy/internal/server"
+	"github.com/alecthomas/kong"
 	"github.com/davidbyttow/govips/v2/vips"
 	"log"
+	"os"
 )
 
 func main() {
+	log.Println(os.Executable())
+	log.Println(os.Getwd())
+
 	vips.Startup(nil)
 	defer vips.Shutdown()
 
@@ -37,5 +42,12 @@ func main() {
 		log.Panic("Error booting params: ", err)
 	}
 
-	server.StartServer()
+	cmd := kong.Parse(&cli.CLI)
+	if cmd.Error != nil {
+		log.Fatal(cmd.Error)
+	}
+
+	err = cmd.Run(&cli.Context{})
+	cmd.FatalIfErrorf(err)
+	//server.StartServer()
 }

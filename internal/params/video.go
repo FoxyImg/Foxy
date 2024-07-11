@@ -6,6 +6,7 @@ import (
 	"foxy/internal/utils"
 	"foxy/internal/vision"
 	"github.com/davidbyttow/govips/v2/vips"
+	"log"
 	"strconv"
 	"time"
 )
@@ -103,6 +104,7 @@ func (opts *VideoParams) ProcessFrame(sourceKey string, sourceId string, config 
 	defer utils.TrackTime(time.Now(), "Process Video Frame")
 
 	if opts.Type == nil {
+		log.Print("Video type is nil")
 		return nil, sourceKey, sourceImage, nil
 	}
 
@@ -116,6 +118,7 @@ func (opts *VideoParams) ProcessFrame(sourceKey string, sourceId string, config 
 		}
 	} else {
 		if *opts.FrameType == "rel" && opts.RelativeTime != nil {
+			log.Print("ExtractFrameAtRelativeTime")
 			ffmeta, sourceKey, sourceImage, err = ffmpegUtility.ExtractFrameAtRelativeTime(config, sourceId, sourceKey, *opts.RelativeTime)
 		} else if *opts.FrameType == "key" && opts.Keyframe != nil {
 			ffmeta, sourceKey, sourceImage, err = ffmpegUtility.ExtractFrameAtKeyframe(config, sourceId, sourceKey, *opts.Keyframe)

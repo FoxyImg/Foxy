@@ -32,7 +32,11 @@ func RegisterImageRoutes(router chi.Router) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		router.Get("/{accessKey}/*", GetImageHandler)
+		if *env.FoxyEnvironment.InProcess {
+			router.Get("/{accessKey}/*", GetImageHandler)
+		} else {
+			router.Get("/{accessKey}/*", GetImageCLIHandler)
+		}
 	})
 }
 
@@ -175,6 +179,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	originalSource := source
 	var img *vips.ImageRef
 	var videoMeta *vision.VideoMetadata
 	if isVideo {
@@ -184,6 +189,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 			videoMeta = ffmeta.GetVideoMetadata()
 		}
 	} else {
+		log.Println("Get Source Image", source)
 		img, err = storage.GetSourceImage(sourceConfig, sourceId, source, imageParams.Debug != nil && imageParams.Debug.DisableSourceCache)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -197,6 +203,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("Process Image", source)
 	buffer, meta, err := params.ProcessImage(sourceId, sourceConfig, sourceId, string(source), imageParams, img)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -222,7 +229,7 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("Set Cached Result", source)
-	_ = storage.SetCachedResult(sourceConfig, sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
+	_ = storage.SetCachedResult(sourceConfig, sourceId, originalSource, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 
 	if *env.FoxyEnvironment.CacheTTL > 0 {
 		expires := time.Now().Add(*env.FoxyEnvironment.CacheTTL)
@@ -232,5 +239,160 @@ func GetImageHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
 	}
 
+	log.Println("Send Image Result", source)
+	sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
+}
+
+func GetImageCLIHandler(w http.ResponseWriter, r *http.Request) {
+	defer utils.TrackTime(time.Now(), "Handle Images Route: "+r.URL.Path+"?"+r.URL.RawQuery)
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 2 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	sourceId := parts[1]
+
+	sourceConfig, err := config.GetSourceConfigFromCache(sourceId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	imgixMode := utils.IfNil(sourceConfig.ImgixMode, false)
+
+	var source string
+	if imgixMode {
+		source = strings.Join(parts[2:], "/")
+		if strings.Contains(source, "%") {
+			unescape, unescapeErr := url.QueryUnescape(source)
+			if unescapeErr == nil {
+				source = unescape
+			}
+		}
+	} else {
+		for len(parts[2])%4 != 0 {
+			parts[2] += "="
+		}
+		sourceBytes, err := base64.URLEncoding.DecodeString(parts[2])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		source = string(sourceBytes)
+	}
+
+	var checkSig = true
+	var imageParams *params.ImageParams
+
+	//TODO: Preset handling
+	//if len(parts) >= 4 && strings.HasPrefix(parts[3], "@") {
+	//	p, version, paramsErr := params.FetchPreset(sourceConfig.AppId, parts[3][1:])
+	//	if paramsErr != nil {
+	//		w.WriteHeader(http.StatusBadRequest)
+	//		return
+	//	}
+	//
+	//	checkSig = false
+	//	imageParams = p
+	//	parts = append(parts, "version:"+strconv.Itoa(version))
+	//}
+
+	if imgixMode {
+		p, paramsErr := params.BuildParamsFromQuery(r.URL.Query())
+		if paramsErr != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		imageParams = p
+	} else {
+		p, paramsErr := params.BuildParams(parts[3:])
+		if paramsErr != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		imageParams = p
+	}
+
+	if checkSig && env.FoxyEnvironment.RequireSignatureValidation {
+		if sourceConfig.Secret == nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !r.URL.Query().Has("s") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		if imgixMode {
+			if !utils.VerifySignatureFromQuery(*sourceConfig.Secret, source, r.URL.Query()) {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		} else {
+			if !utils.VerifySignature(*sourceConfig.Secret, r.URL.Query().Get("s"), strings.TrimRight(r.URL.Path, "/")) {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		}
+	}
+
+	if r.URL.Query().Has("showpreset") {
+		paramsJSON, jsonErr := json.Marshal(imageParams)
+		if jsonErr != nil {
+			fmt.Println("Marshal JSON Error: ", jsonErr)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(paramsJSON)
+		return
+	}
+
+	if imageParams.Debug != nil && !imageParams.Debug.DisableRenderCache {
+		cached, _ := storage.GetCachedResult(sourceConfig, sourceId, source, imageParams, utils.IfNil(imageParams.Export.Format, "jpg"))
+		if cached != nil {
+			http.ServeFile(w, r, *cached)
+			return
+		}
+
+		log.Println("Render cache miss")
+	}
+
+	log.Println("Process Image", source)
+	buffer, meta, err := params.ProcessImageCLI(sourceId, string(source), imageParams)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	if imageParams.MetaOnly {
+		metaJSON, err := json.Marshal(meta)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(metaJSON)
+		return
+	}
+
+	if *env.FoxyEnvironment.CacheTTL > 0 {
+		expires := time.Now().Add(*env.FoxyEnvironment.CacheTTL)
+		w.Header().Add("Expires", strings.Replace(expires.Format(time.RFC1123), "UTC", "GMT", -1))
+		w.Header().Set("Cache-Control", fmt.Sprintf("public, s-maxage=%d, max-age=%d, no-transform", *env.FoxyEnvironment.CacheTTL, *env.FoxyEnvironment.CacheTTL))
+	} else {
+		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
+	}
+
+	log.Println("Send Image Result", source)
 	sendImageResult(w, utils.IfNil(imageParams.Export.Format, "jpg"), buffer)
 }

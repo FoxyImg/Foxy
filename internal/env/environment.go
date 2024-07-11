@@ -11,6 +11,7 @@ type FoxyEnv struct {
 	Isolated bool
 
 	ServerType  string  `env:"SERVER_TYPE"`
+	InProcess   *bool   `env:"IN_PROCESS"`
 	DatabaseUrl *string `env:"DB_URL"`
 	RedisUrl    *string `env:"REDIS_URL"`
 
@@ -67,6 +68,7 @@ type FoxyEnv struct {
 var FoxyEnvironment = FoxyEnv{
 	ServerType:            "primary",
 	Port:                  "8080",
+	InProcess:             utils.Ptr(false),
 	IdleTimeout:           utils.Ptr(60),
 	ReadTimeout:           utils.Ptr(1),
 	WriteTimeout:          utils.Ptr(10),
@@ -97,6 +99,7 @@ func Boot() {
 	}
 
 	log.Printf("ServerType: %s", FoxyEnvironment.ServerType)
+	log.Printf("InProcess: %s", *FoxyEnvironment.InProcess)
 	log.Printf("SourceConfigFile: %s", *FoxyEnvironment.SourceConfigFile)
 	log.Printf("PresetsFile: %s", *FoxyEnvironment.PresetsFile)
 	log.Printf("Port: %s", FoxyEnvironment.Port)
@@ -120,4 +123,6 @@ func Boot() {
 	log.Printf("MaxBurst: %d", *FoxyEnvironment.MaxBurst)
 	log.Printf("CacheTTL: %s", FoxyEnvironment.CacheTTL.String())
 	log.Printf("AllowedOrigins: %s", strings.Join(*FoxyEnvironment.AllowedOrigins, ", "))
+	log.Printf("FFMPEG: %s", *FoxyEnvironment.FfmpegPath)
+	log.Printf("FFPROBE: %s", *FoxyEnvironment.FfprobePath)
 }

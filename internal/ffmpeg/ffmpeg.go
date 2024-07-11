@@ -118,6 +118,7 @@ func (ffmpeg *Ffmpeg) Probe(config *config.Config, sourceId string, key string) 
 	}
 
 	probeCmd := exec.Command(*ffmpeg.FfprobePath, "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", pathOrUrl)
+	log.Println("Probe Command:", *ffmpeg.FfprobePath, "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", pathOrUrl)
 	probeStdOut, err := probeCmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -133,6 +134,7 @@ func (ffmpeg *Ffmpeg) Probe(config *config.Config, sourceId string, key string) 
 	}
 
 	keyframesCmd := exec.Command(*ffmpeg.FfprobePath, "-loglevel", "error", "-select_streams", "v:0", "-show_entries", "packet=pts_time,flags", "-of", "json", pathOrUrl)
+	log.Println("Keyframes Command:", *ffmpeg.FfprobePath, "-loglevel", "error", "-select_streams", "v:0", "-show_entries", "packet=pts_time,flags", "-of", "json", pathOrUrl)
 	keyframesStdOut, err := keyframesCmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -148,7 +150,7 @@ func (ffmpeg *Ffmpeg) Probe(config *config.Config, sourceId string, key string) 
 	}
 
 	for _, packet := range packets.Packets {
-		if packet.Flags == "K__" {
+		if strings.Index(packet.Flags, "K") == 0 {
 			meta.Keyframes = append(meta.Keyframes, packet.PtsTime)
 		}
 	}
@@ -207,6 +209,7 @@ func (ffmpeg *Ffmpeg) PrepareFrameExtraction(config *config.Config, sourceId str
 func (ffmpeg *Ffmpeg) ExtractFrameAtRelativeTime(config *config.Config, sourceId string, key string, framePercent float64) (*Meta, string, *vips.ImageRef, error) {
 	meta, pathOrUrl, err := ffmpeg.PrepareFrameExtraction(config, sourceId, key)
 	if err != nil {
+		log.Println("ExtractFrameAtRelativeTime", err)
 		return nil, key, nil, err
 	}
 
@@ -214,11 +217,13 @@ func (ffmpeg *Ffmpeg) ExtractFrameAtRelativeTime(config *config.Config, sourceId
 	cachedSourceFilePath := "/" + sourceId + "/" + strings.TrimLeft(newKey, "/")
 	cachedSourceFileName, err := securejoin.SecureJoin(strings.TrimRight(*env.FoxyEnvironment.CacheDir, "/"), cachedSourceFilePath)
 	if err != nil {
+		log.Println("ExtractFrameAtRelativeTime Err", err)
 		return nil, key, nil, err
 	}
 
 	_, err = os.Stat(cachedSourceFileName)
 	if err == nil {
+		log.Println("Found cached source file", cachedSourceFileName)
 		img, err := vips.NewImageFromFile(cachedSourceFileName)
 		if err == nil {
 			return meta, newKey, img, nil
@@ -234,6 +239,7 @@ func (ffmpeg *Ffmpeg) ExtractFrameAtRelativeTime(config *config.Config, sourceId
 	frame := int(math.Round(float64(len(meta.Keyframes)) * framePercent))
 
 	extractFrame := exec.Command(*ffmpeg.FfmpegPath, "-ss", meta.Keyframes[frame], "-i", *pathOrUrl, "-frames", "1", cachedSourceFileName)
+	log.Println("Extract Command:", *ffmpeg.FfmpegPath, "-ss", meta.Keyframes[frame], "-i", *pathOrUrl, "-frames", "1", cachedSourceFileName)
 	if err = extractFrame.Run(); err != nil {
 		return nil, key, nil, err
 
