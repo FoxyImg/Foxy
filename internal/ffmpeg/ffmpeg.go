@@ -58,7 +58,7 @@ func (ffmpeg *Ffmpeg) IsVideo(sourceKey string) bool {
 	}
 
 	ext := strings.ToLower(sourceKey[strings.LastIndex(sourceKey, "."):])
-	return ext == ".mp4" || ext == ".mov" || ext == ".m2v" || ext == ".mkv"
+	return ext == ".mp4" || ext == ".mov" || ext == ".m2v" || ext == ".mkv" || ext == ".m4v"
 }
 
 func (ffmpeg *Ffmpeg) Probe(config *config.Config, sourceId string, key string) (*Meta, error) {
